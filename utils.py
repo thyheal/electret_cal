@@ -8,6 +8,7 @@ from datetime import datetime
 import csv
 import logging
 import datetime
+import time
 
 '''
 This is some tools used to calculate the ip of molecules.
