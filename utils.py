@@ -9,7 +9,10 @@ import csv
 import logging
 import datetime
 import time
-
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+from scipy import stats
 '''
 This is some tools used to calculate the ip of molecules.
     1.The flow of the calculation can be illustrated as follows:
@@ -45,6 +48,29 @@ def smile2xyz(xyz_name,smile):
     with open(file_path, "w") as file:
         file.write(xyz_str)
 
+def xyzcheck(molecule_name, Canonsmile):
+    '''
+    This is used to check whether the xyz file is valid.
+    Valid means the xyz file can be converted to the same smile string as input in GeoMol.
+    '''
+    xyz_name = molecule_name + "_0.xyz"
+    os.system('obabel {2}/{0} -ixyz --osmi -O {2}/{1}.smi'.format(xyz_name,molecule_name,molecule_name))
+    with open(f'{molecule_name}/{molecule_name}.smi', 'r') as file:
+        lines = file.readlines()
+    smile = lines[0].split('\t')[0]
+    try:
+        smile1 = smile.replace('@','')
+        smile1 = Chem.CanonSmiles(smile1)
+        Canonsmile1 = Canonsmile.replace('@','')
+        Canonsmile1 = Chem.CanonSmiles(Canonsmile1)
+        if smile1 != Canonsmile1:
+            return False
+        else:
+            return True
+    except Exception as e:
+        print(f"Error in xyzcheck: {e}")
+        return False
+    
 def xyz2gjf(xyz_name, gjf_header):
     '''
     xyz_name: xyz file including postfixed .xyz
@@ -96,7 +122,11 @@ def gjf2sh(dir, gjf_name):
         file.write(modified_content)
     os.system("pjsub {}".format(sh_path))
 
+
 def check_gaussian_log(file_path):
+    '''
+    If valid, return True, else return False.
+    '''
     try:
         with open(file_path, 'r') as file:
             log_content = file.read()
@@ -109,6 +139,10 @@ def check_gaussian_log(file_path):
         return False
 
 def log2xyz(dir, log_name):
+    '''
+    If valid, return True, else return False.
+    sometimes the Gaussian calculation will fail, so we need to check the log file.
+    '''
     if not check_gaussian_log(os.path.join(dir, log_name)):
         print(f"Error: {dir}/{log_name} is not a valid log file.")        
     id = int(log_name.split('.')[0].split('_')[1]) + 1
@@ -122,61 +156,105 @@ def log2xyz(dir, log_name):
     # rewrite the xyz file
     with open(f'{dir}/{xyz_name}.xyz', 'w') as file:
         file.writelines(lines)
+    return check_gaussian_log(os.path.join(dir, log_name))
 
-def IP_calculation(dir):
-    csv = f'{dir}.csv'
-    open(csv, 'w').close()
-    try:
-        if os.path.isfile(f'{dir}/{dir}_0.log') and os.path.isfile(f'{dir}/{dir}_1.log') :
-            with open(f'{dir}/{dir}_0.log') as f:
-                file = f.read()
-                flag1 = file.find("Normal termination")
-                flag2 = file.find("Error termination")
-            with open(f'{dir}/{dir}_1.log') as f:
-                file = f.read()
-                flag3 = file.find("Normal termination")
-                flag4 = file.find("Error termination")
-            if flag1 != -1 and flag3 != -1:
-                os.system("echo ` grep 'SCF Done' {0} | tail -n 1 | awk '{{print $5}}' ` > {1}".format(f'{dir}/{dir}_0.log',csv))
-                os.system("echo ` grep 'SCF Done' {0} | tail -n 1 | awk '{{print $5}}' ` >> {1}".format(f'{dir}/{dir}_1.log',csv))
-            with open(csv, 'r') as f:
-                lines = f.readlines()
-                cation = lines[-2].strip()
-                neutral = lines[-1].strip()
-                IP = (float(cation) - float(neutral)) * 27.2114
-            os.system('rm {0}'.format(csv))
-            print (dir," cation energy(Ha):", cation, " neutral energy(Ha):", neutral, 'IP(eV):', IP)
-            os.system("echo  {0},{1} eV >> ip_val.csv".format(dir ,IP))
-    except Exception as e:
-        print(f"Error: {e}")
-        os.system("echo  {0},Error eV >> ip_val.csv".format(dir))
 
 def flow_pos(molecule_name):
     xyz2gjf(xyz_name = molecule_name + "_0.xyz", gjf_header = "header_pos_nonopt.xyz")
     gjf2sh(dir = molecule_name, gjf_name = molecule_name + "_0.gjf")
     
+def flow_neg(molecule_name):
+    xyz2gjf(xyz_name = molecule_name + "_0.xyz", gjf_header = "header_neg_nonopt.xyz")
+    gjf2sh(dir = molecule_name, gjf_name = molecule_name + "_0.gjf")
+
 def flow_neu(molecule_name):
     log2xyz(dir = molecule_name, log_name = molecule_name + "_0.log")
     xyz2gjf(xyz_name = molecule_name + "_1.xyz", gjf_header = "header_neu_nonopt.xyz")
     gjf2sh(dir = molecule_name, gjf_name = molecule_name + "_1.gjf")
     # log2xyz(dir = molecule_name, log_name = molecule_name + "_1.log")
 
-def main():
-    current_time = datetime.datetime.now()
-    log_file_name = current_time.strftime("%Y-%m-%d_%H_%M.log")
-    logging.basicConfig(filename=log_file_name, level=logging.INFO, format='%(message)s')
-    logging.info('Dear user, you are using ip_cal/utils.py created by Yuhan GU.')
-    smile2xyz(xyz_name = "NH3_0.xyz",smile = "N")
-    flow_pos(molecule_name="NH3")
 
-def next():
-    flow_neu(molecule_name="NH3")
+def IP_calculation(dir):
+    csv = f'{dir}.csv'
+    open(csv, 'w').close()
+    try:
+        path1 = f'{dir}/{dir}_0.log'
+        path2 = f'{dir}/{dir}_1.log'
+        if check_gaussian_log(path1) and check_gaussian_log(path2):
+            os.system("echo ` grep 'SCF Done' {0} | tail -n 1 | awk '{{print $5}}' ` > {1}".format(f'{dir}/{dir}_0.log',csv))
+            os.system("echo ` grep 'SCF Done' {0} | tail -n 1 | awk '{{print $5}}' ` >> {1}".format(f'{dir}/{dir}_1.log',csv))
+            with open(csv, 'r') as f:
+                lines = f.readlines()
+                cation = lines[-2].strip()
+                neutral = lines[-1].strip()
+                IP = (float(cation) - float(neutral)) * 27.2114
+                os.system('rm {0}'.format(csv))
+                os.system("echo  {0},{1} eV >> ip_val.csv".format(dir ,IP))
+            # print (dir," cation energy(Ha):", cation, " neutral energy(Ha):", neutral, 'IP(eV):', IP)
+                return(IP)
+        else:
+            os.system('rm {0}'.format(csv))
+            return(0)
+    except Exception as e:
+        print(f"Error: {e}")
+        os.system("echo  {0},Error eV >> ip_val.csv".format(dir))
+        os.system('rm {0}'.format(csv))
+        return(0)
 
-if __name__ == "__main__":
-    for i in range(3,9):
-        flow_pos(molecule_name=f"A{i}")
-    for i in range(0, 4):
-        flow_neu(molecule_name=f"mol{i}")
+def IP_analysis(IP_values, molecule_name):
+    '''
+    Return the median value of the IP values.
+    '''
+    ip_data = np.array(IP_values)
+    # 检测和处理异常值
+    ip_data_cleaned = ip_data[ip_data > 0]
+    ip_data_cleaned = ip_data_cleaned[ip_data_cleaned != None]
+
+    # 创建箱线图来展示数据分布
+    plt.boxplot(ip_data_cleaned)
+    plt.title(f'{molecule_name} IP distribution')
+    plt.xlabel('IP')
+    plt.ylim(0, 15)
+    plt.ylabel('eV')
+    plt.show()
+    # 计算平均数和中位数
+    mean_value = np.mean(ip_data_cleaned)
+    median_value = np.median(ip_data_cleaned)
+    min_value = np.min(ip_data_cleaned)
+    max_value = np.max(ip_data_cleaned)
+    
+    # 创建直方图来展示数据的概率分布
+    plt.hist(ip_data_cleaned, bins=10, density=True, alpha=0.6, color='b')
+    plt.title(f'{molecule_name} IP distribution')
+    plt.xlabel('IP')
+    plt.xlim(0, 15)
+    plt.ylabel('density')
+    plt.show()
+    print(len(ip_data_cleaned))
+    print(f'This is the IP calculated for {molecule_name}')
+    print(f'min:{min_value}')
+    print(f'max:{max_value}')
+    print(f'avg:{mean_value}')
+    print(f'med:{median_value}')
+    df = pd.DataFrame({'IP_Data': ip_data_cleaned})
+    print(df)
+    return median_value, mean_value
+
+
+# def main():
+#     current_time = datetime.datetime.now()
+#     log_file_name = current_time.strftime("%Y-%m-%d_%H_%M.log")
+#     logging.basicConfig(filename=log_file_name, level=logging.INFO, format='%(message)s')
+#     logging.info('Dear user, you are using ip_cal/utils.py created by Yuhan GU.')
+#     smile2xyz(xyz_name = "NH3_0.xyz",smile = "N")
+#     flow_pos(molecule_name="NH3")
+
+
+# if __name__ == "__main__":
+#     for i in range(3,9):
+#         flow_pos(molecule_name=f"A{i}")
+#     for i in range(0, 4):
+#         flow_neu(molecule_name=f"mol{i}")
     # for i in range(0, 10):
     #     IP_calculation(dir=f"mol{i}")
 # if __name__ == "__main__":
@@ -189,3 +267,164 @@ if __name__ == "__main__":
 #     log2xyz(dir = "NH3", log_name = "NH3_1.log")
 #     IP_calculation(dir = "NH3")
     
+# name_list = ['EHOPA','AEPY','AEP','APN','DBE','DIPEDA','OA','mXD','S','A','TAEA']
+name_list = ['EHOPA','AEPY','AEP','APN','DBE','DIPEDA','OA','mXD','S','A']
+smiles_list = [
+'CCCCC(CC)COCCCNC(C(F)(F)C1(F)OC(F)(F)C(F)(F)C1(C(F)(C(O)=O)F)F)=O',
+'FC1(F)C(F)(F)C(F)(C(F)(C(O)=O)F)C(F)(C(F)(C(NCCC2=CN=CC=C2)=O)F)O1',
+'FC1(F)C(F)(F)C(F)(C(F)(C(O)=O)F)C(F)(C(F)(C(NCCN2CCCCC2)=O)F)O1',
+'FC1(F)C(F)(F)C(F)(C(F)(C(O)=O)F)C(F)(C(F)(C(NC2=CC(C#N)=CC(C#N)=C2)=O)F)O1',
+'FC1(F)C(F)(F)C(F)(C(F)(C(O)=O)F)C(F)(C(F)(C(NCCN(CCCC)CCCC)=O)F)O1',
+'FC1(F)C(F)(F)C(F)(C(F)(C(O)=O)F)C(F)(C(F)(C(NCCN(C(C)C)C(C)C)=O)F)O1',
+'FC1(F)C(F)(F)C(F)(C(F)(C(O)=O)F)C(F)(C(F)(C(NCCCCCCCC)=O)F)O1',
+'FC1(F)C(F)(F)C(F)(C(F)(C(O)=O)F)C(F)(C(F)(C(NCC2=CC(CN)=CC=C2)=O)F)O1',
+'FC1(C(F)(C(F)(F)F)F)C(OC(F)(F)C(F)1F)(C(F)(C(F)(F)F)F)F',
+'FC1(C(F)(C(F)(F)F)F)C(OC(F)(F)C(F)1F)(C(F)(C(O)=O)F)F',
+]
+
+smiles_dict = dict(zip(name_list, smiles_list))
+
+
+names = locals()
+IP_PCM = {  'EHOPA':7.38,
+            'AEPY':7.63,
+            'AEP':6.18,
+            'APN':8.18,
+            'DBE':6.27,
+            'DIPEDA':6.21,
+            'OA':8.15,
+            'mXD':6.78,
+            'S':11.32,
+            'A':9.73,
+        }
+P_sp = {    'EHOPA':0.686,
+            'AEPY':0.855,
+            'AEP':0.862,
+            'APN':0.558,
+            'DBE':0.746,
+            'DIPEDA':0.715,
+            'OA':0.576,
+            'mXD':0.959,
+            'S':0.135,
+            'A':0.211,
+        }
+N_sp = {    'EHOPA':0.5,
+            'AEPY':0.145,
+            'AEP':0.815,
+            'APN':0.409,
+            'DBE':0.676,
+            'DIPEDA':0.592,
+            'OA':0.481,
+            'mXD':0.954,
+            'S':0.088,
+            'A':0.237,
+        }
+
+#IP calculation gaussian
+for _ in name_list:
+    count = 0
+    for i in range(20,40):
+        if xyzcheck(f'{_}{i}', smiles_dict[_]):
+            flow_pos(molecule_name=f'{_}{i}')
+            time.sleep(150)
+            if log2xyz(dir=f'{_}{i}', log_name=f'{_}{i}_0.log'):
+                flow_neu(molecule_name=f'{_}{i}')
+                time.sleep(150)
+                count+=1
+            else:
+                continue
+            # print(f'{_}{i} is a valid smile string.')
+        else:
+            continue
+            # print(f'{_}{i} is not a valid smile string.')
+    print(_, count)
+
+# IP calculation
+def process_data(prefix, num):
+    IP_list = []
+    count_list = []
+    try:
+        for i in range(1, num):
+            identifier = f'{prefix}{i}'
+            if xyzcheck(identifier,smiles_dict[prefix]):
+                IP_list.append(IP_calculation(identifier))
+                count_list.append(i)
+                print(f'{identifier} is ok')
+            else:
+                print(f'{identifier} is error')
+    except Exception as e:
+        print(f"Error: {e}")
+    return IP_list
+
+def corr(data1, data2):
+    return np.corrcoef(np.array(data1), np.array(data2))[0,1]
+
+names = locals()
+for _ in name_list:
+    names[f'IP_{_}'] = process_data(_, 20)
+
+# IP analysis graph
+IP_mean,IP_med = {},{}
+for _ in name_list:
+    names[f'IP_med_{_}'], names[f'IP_avg_{_}']= IP_analysis(names[f'IP_{_}'],_)
+    IP_mean[_] = names[f'IP_avg_{_}']
+    IP_med[_] = names[f'IP_med_{_}']
+
+def square_fig(data1, data2):
+    plt.figure(figsize=(6, 6))
+    plt.scatter(data1, data2)
+    # 添加标签和标题
+    plt.xlabel('X-axis')
+    plt.ylabel('Y-axis')
+    plt.title('Scatter Plot with Pearson Correlation')
+    # 添加图例
+    plt.legend()
+    # 显示图表
+    plt.show()
+
+psp = []
+for _ in name_list:
+    psp.append(P_sp[_])
+ippcm = []
+for _ in name_list:
+    ippcm.append(IP_PCM[_])
+ipmean = []
+for _ in name_list:
+    ipmean.append(IP_mean[_])
+ipmed = []
+for _ in name_list:
+    ipmed.append(IP_med[_])
+nsp = []
+for _ in name_list:
+    nsp.append(N_sp[_])
+
+
+for _ in name_list:
+    names[f'valid_{_}'] = 0
+for _ in name_list:
+    for i in range(0,40):
+        if xyzcheck(f'{_}{i}', smiles_dict[_]):
+            names[f'valid_{_}'] += 1
+
+for _ in name_list:
+    print(f'{_} valid: {names[f"valid_{_}"]}')
+
+
+name_list = ['DIPEDA','OA','mXD','S','A']
+for _ in name_list:
+    count = 0
+    for i in range(20,40):
+        if xyzcheck(f'{_}{i}', smiles_dict[_]):
+            flow_pos(molecule_name=f'{_}{i}')
+            time.sleep(150)
+            if log2xyz(dir=f'{_}{i}', log_name=f'{_}{i}_0.log'):
+                flow_neu(molecule_name=f'{_}{i}')
+                time.sleep(100)
+                count+=1
+            else:
+                continue
+            # print(f'{_}{i} is a valid smile string.')
+        else:
+            continue
+            # print(f'{_}{i} is not a valid smile string.')
+    print(_, count)
