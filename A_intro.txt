@@ -1,0 +1,9 @@
+B3LYP 6-311g(d,p) for positive and neutral without optimization
+RDKIT generated
+出现了bug，他那个计算完的log文件不对，有[]
+强制执行运算
+
+            Name	IP
+0	Benzoqionone	9.864
+1	TCNQ	        9.209
+2	F4TCNQ	        9.545
