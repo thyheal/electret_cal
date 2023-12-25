@@ -1,4 +1,3 @@
-import os
 class GaussianCal:
     def __init__(self, method, basis, charge,opt = False,dispersion = False, PCM=False, wfn=True,debug=False):
         

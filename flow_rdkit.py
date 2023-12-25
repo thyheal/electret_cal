@@ -1,6 +1,5 @@
 import utils
 import gaussian_cal
-import pandas as pd
 smiles_list = ['C','N','CC','NN']
 name_list = ['Ch4','NH3','Ethane','Hydrazine']
 
