@@ -1,0 +1,10 @@
+%nprocshared=24
+%mem=40GB
+%rwf=__dir__/__title__.rwf
+%nosave
+%chk=__dir__/__title__.chk
+#p __method__/__basis__ __dispersion__ __PCM__ pop=mk scf=(maxcycle=3000) __wfn__
+
+Title __title__
+
+__charge__

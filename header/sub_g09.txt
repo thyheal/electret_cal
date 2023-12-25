@@ -1,0 +1,12 @@
+#!/bin/sh
+
+#SBATCH -p __debug__
+#SBATCH -N 1
+#SBATCH -n 1
+#SBATCH -c 24
+
+export g09root="/home/k0335/k033513/app"
+export GAUSS_SCRDIR="/home/k0335/k033513/app/g09/scratch"
+source /home/k0335/k033513/app/g09/bsd/g09.profile
+
+g09 < __changegjf__ > __changelog__ 
