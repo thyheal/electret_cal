@@ -39,7 +39,7 @@ def smile2xyz(xyz_name,smile):
     mol = Chem.AddHs(mol)
     AllChem.EmbedMolecule(mol, randomSeed = 1)
     AllChem.MMFFOptimizeMolecule(mol)
-    Draw.MolToImage(mol,size=(100,100))
+    # Draw.MolToImage(mol,size=(100,100))
     xyz_str = Chem.MolToXYZBlock(mol)
     dir_name = xyz_name.split('_')[0]
     if not os.path.exists(dir_name):
@@ -268,107 +268,107 @@ def IP_analysis(IP_values, molecule_name):
 #     IP_calculation(dir = "NH3")
     
 # name_list = ['EHOPA','AEPY','AEP','APN','DBE','DIPEDA','OA','mXD','S','A','TAEA']
-name_list = ['EHOPA','AEPY','AEP','APN','DBE','DIPEDA','OA','mXD','S','A']
-smiles_list = [
-'CCCCC(CC)COCCCNC(C(F)(F)C1(F)OC(F)(F)C(F)(F)C1(C(F)(C(O)=O)F)F)=O',
-'FC1(F)C(F)(F)C(F)(C(F)(C(O)=O)F)C(F)(C(F)(C(NCCC2=CN=CC=C2)=O)F)O1',
-'FC1(F)C(F)(F)C(F)(C(F)(C(O)=O)F)C(F)(C(F)(C(NCCN2CCCCC2)=O)F)O1',
-'FC1(F)C(F)(F)C(F)(C(F)(C(O)=O)F)C(F)(C(F)(C(NC2=CC(C#N)=CC(C#N)=C2)=O)F)O1',
-'FC1(F)C(F)(F)C(F)(C(F)(C(O)=O)F)C(F)(C(F)(C(NCCN(CCCC)CCCC)=O)F)O1',
-'FC1(F)C(F)(F)C(F)(C(F)(C(O)=O)F)C(F)(C(F)(C(NCCN(C(C)C)C(C)C)=O)F)O1',
-'FC1(F)C(F)(F)C(F)(C(F)(C(O)=O)F)C(F)(C(F)(C(NCCCCCCCC)=O)F)O1',
-'FC1(F)C(F)(F)C(F)(C(F)(C(O)=O)F)C(F)(C(F)(C(NCC2=CC(CN)=CC=C2)=O)F)O1',
-'FC1(C(F)(C(F)(F)F)F)C(OC(F)(F)C(F)1F)(C(F)(C(F)(F)F)F)F',
-'FC1(C(F)(C(F)(F)F)F)C(OC(F)(F)C(F)1F)(C(F)(C(O)=O)F)F',
-]
+# name_list = ['EHOPA','AEPY','AEP','APN','DBE','DIPEDA','OA','mXD','S','A']
+# smiles_list = [
+# 'CCCCC(CC)COCCCNC(C(F)(F)C1(F)OC(F)(F)C(F)(F)C1(C(F)(C(O)=O)F)F)=O',
+# 'FC1(F)C(F)(F)C(F)(C(F)(C(O)=O)F)C(F)(C(F)(C(NCCC2=CN=CC=C2)=O)F)O1',
+# 'FC1(F)C(F)(F)C(F)(C(F)(C(O)=O)F)C(F)(C(F)(C(NCCN2CCCCC2)=O)F)O1',
+# 'FC1(F)C(F)(F)C(F)(C(F)(C(O)=O)F)C(F)(C(F)(C(NC2=CC(C#N)=CC(C#N)=C2)=O)F)O1',
+# 'FC1(F)C(F)(F)C(F)(C(F)(C(O)=O)F)C(F)(C(F)(C(NCCN(CCCC)CCCC)=O)F)O1',
+# 'FC1(F)C(F)(F)C(F)(C(F)(C(O)=O)F)C(F)(C(F)(C(NCCN(C(C)C)C(C)C)=O)F)O1',
+# 'FC1(F)C(F)(F)C(F)(C(F)(C(O)=O)F)C(F)(C(F)(C(NCCCCCCCC)=O)F)O1',
+# 'FC1(F)C(F)(F)C(F)(C(F)(C(O)=O)F)C(F)(C(F)(C(NCC2=CC(CN)=CC=C2)=O)F)O1',
+# 'FC1(C(F)(C(F)(F)F)F)C(OC(F)(F)C(F)1F)(C(F)(C(F)(F)F)F)F',
+# 'FC1(C(F)(C(F)(F)F)F)C(OC(F)(F)C(F)1F)(C(F)(C(O)=O)F)F',
+# ]
 
-smiles_dict = dict(zip(name_list, smiles_list))
+# smiles_dict = dict(zip(name_list, smiles_list))
 
 
-names = locals()
-IP_PCM = {  'EHOPA':7.38,
-            'AEPY':7.63,
-            'AEP':6.18,
-            'APN':8.18,
-            'DBE':6.27,
-            'DIPEDA':6.21,
-            'OA':8.15,
-            'mXD':6.78,
-            'S':11.32,
-            'A':9.73,
-        }
-P_sp = {    'EHOPA':0.686,
-            'AEPY':0.855,
-            'AEP':0.862,
-            'APN':0.558,
-            'DBE':0.746,
-            'DIPEDA':0.715,
-            'OA':0.576,
-            'mXD':0.959,
-            'S':0.135,
-            'A':0.211,
-        }
-N_sp = {    'EHOPA':0.5,
-            'AEPY':0.145,
-            'AEP':0.815,
-            'APN':0.409,
-            'DBE':0.676,
-            'DIPEDA':0.592,
-            'OA':0.481,
-            'mXD':0.954,
-            'S':0.088,
-            'A':0.237,
-        }
+# names = locals()
+# IP_PCM = {  'EHOPA':7.38,
+#             'AEPY':7.63,
+#             'AEP':6.18,
+#             'APN':8.18,
+#             'DBE':6.27,
+#             'DIPEDA':6.21,
+#             'OA':8.15,
+#             'mXD':6.78,
+#             'S':11.32,
+#             'A':9.73,
+#         }
+# P_sp = {    'EHOPA':0.686,
+#             'AEPY':0.855,
+#             'AEP':0.862,
+#             'APN':0.558,
+#             'DBE':0.746,
+#             'DIPEDA':0.715,
+#             'OA':0.576,
+#             'mXD':0.959,
+#             'S':0.135,
+#             'A':0.211,
+#         }
+# N_sp = {    'EHOPA':0.5,
+#             'AEPY':0.145,
+#             'AEP':0.815,
+#             'APN':0.409,
+#             'DBE':0.676,
+#             'DIPEDA':0.592,
+#             'OA':0.481,
+#             'mXD':0.954,
+#             'S':0.088,
+#             'A':0.237,
+#         }
 
 #IP calculation gaussian
-for _ in name_list:
-    count = 0
-    for i in range(20,40):
-        if xyzcheck(f'{_}{i}', smiles_dict[_]):
-            flow_pos(molecule_name=f'{_}{i}')
-            time.sleep(150)
-            if log2xyz(dir=f'{_}{i}', log_name=f'{_}{i}_0.log'):
-                flow_neu(molecule_name=f'{_}{i}')
-                time.sleep(150)
-                count+=1
-            else:
-                continue
-            # print(f'{_}{i} is a valid smile string.')
-        else:
-            continue
-            # print(f'{_}{i} is not a valid smile string.')
-    print(_, count)
+# for _ in name_list:
+#     count = 0
+#     for i in range(20,40):
+#         if xyzcheck(f'{_}{i}', smiles_dict[_]):
+#             flow_pos(molecule_name=f'{_}{i}')
+#             time.sleep(150)
+#             if log2xyz(dir=f'{_}{i}', log_name=f'{_}{i}_0.log'):
+#                 flow_neu(molecule_name=f'{_}{i}')
+#                 time.sleep(150)
+#                 count+=1
+#             else:
+#                 continue
+#             # print(f'{_}{i} is a valid smile string.')
+#         else:
+#             continue
+#             # print(f'{_}{i} is not a valid smile string.')
+#     print(_, count)
 
 # IP calculation
-def process_data(prefix, num):
-    IP_list = []
-    count_list = []
-    try:
-        for i in range(1, num):
-            identifier = f'{prefix}{i}'
-            if xyzcheck(identifier,smiles_dict[prefix]):
-                IP_list.append(IP_calculation(identifier))
-                count_list.append(i)
-                print(f'{identifier} is ok')
-            else:
-                print(f'{identifier} is error')
-    except Exception as e:
-        print(f"Error: {e}")
-    return IP_list
+# def process_data(prefix, num):
+#     IP_list = []
+#     count_list = []
+#     try:
+#         for i in range(1, num):
+#             identifier = f'{prefix}{i}'
+#             if xyzcheck(identifier,smiles_dict[prefix]):
+#                 IP_list.append(IP_calculation(identifier))
+#                 count_list.append(i)
+#                 print(f'{identifier} is ok')
+#             else:
+#                 print(f'{identifier} is error')
+#     except Exception as e:
+#         print(f"Error: {e}")
+#     return IP_list
 
 def corr(data1, data2):
     return np.corrcoef(np.array(data1), np.array(data2))[0,1]
 
-names = locals()
-for _ in name_list:
-    names[f'IP_{_}'] = process_data(_, 20)
+# names = locals()
+# for _ in name_list:
+#     names[f'IP_{_}'] = process_data(_, 20)
 
-# IP analysis graph
-IP_mean,IP_med = {},{}
-for _ in name_list:
-    names[f'IP_med_{_}'], names[f'IP_avg_{_}']= IP_analysis(names[f'IP_{_}'],_)
-    IP_mean[_] = names[f'IP_avg_{_}']
-    IP_med[_] = names[f'IP_med_{_}']
+# # IP analysis graph
+# IP_mean,IP_med = {},{}
+# for _ in name_list:
+#     names[f'IP_med_{_}'], names[f'IP_avg_{_}']= IP_analysis(names[f'IP_{_}'],_)
+#     IP_mean[_] = names[f'IP_avg_{_}']
+#     IP_med[_] = names[f'IP_med_{_}']
 
 def square_fig(data1, data2):
     plt.figure(figsize=(6, 6))
@@ -382,49 +382,49 @@ def square_fig(data1, data2):
     # 显示图表
     plt.show()
 
-psp = []
-for _ in name_list:
-    psp.append(P_sp[_])
-ippcm = []
-for _ in name_list:
-    ippcm.append(IP_PCM[_])
-ipmean = []
-for _ in name_list:
-    ipmean.append(IP_mean[_])
-ipmed = []
-for _ in name_list:
-    ipmed.append(IP_med[_])
-nsp = []
-for _ in name_list:
-    nsp.append(N_sp[_])
+# psp = []
+# for _ in name_list:
+#     psp.append(P_sp[_])
+# ippcm = []
+# for _ in name_list:
+#     ippcm.append(IP_PCM[_])
+# ipmean = []
+# for _ in name_list:
+#     ipmean.append(IP_mean[_])
+# ipmed = []
+# for _ in name_list:
+#     ipmed.append(IP_med[_])
+# nsp = []
+# for _ in name_list:
+#     nsp.append(N_sp[_])
 
 
-for _ in name_list:
-    names[f'valid_{_}'] = 0
-for _ in name_list:
-    for i in range(0,40):
-        if xyzcheck(f'{_}{i}', smiles_dict[_]):
-            names[f'valid_{_}'] += 1
+# for _ in name_list:
+#     names[f'valid_{_}'] = 0
+# for _ in name_list:
+#     for i in range(0,40):
+#         if xyzcheck(f'{_}{i}', smiles_dict[_]):
+#             names[f'valid_{_}'] += 1
 
-for _ in name_list:
-    print(f'{_} valid: {names[f"valid_{_}"]}')
+# for _ in name_list:
+#     print(f'{_} valid: {names[f"valid_{_}"]}')
 
 
-name_list = ['DIPEDA','OA','mXD','S','A']
-for _ in name_list:
-    count = 0
-    for i in range(20,40):
-        if xyzcheck(f'{_}{i}', smiles_dict[_]):
-            flow_pos(molecule_name=f'{_}{i}')
-            time.sleep(150)
-            if log2xyz(dir=f'{_}{i}', log_name=f'{_}{i}_0.log'):
-                flow_neu(molecule_name=f'{_}{i}')
-                time.sleep(100)
-                count+=1
-            else:
-                continue
-            # print(f'{_}{i} is a valid smile string.')
-        else:
-            continue
-            # print(f'{_}{i} is not a valid smile string.')
-    print(_, count)
+# name_list = ['DIPEDA','OA','mXD','S','A']
+# for _ in name_list:
+#     count = 0
+#     for i in range(20,40):
+#         if xyzcheck(f'{_}{i}', smiles_dict[_]):
+#             flow_pos(molecule_name=f'{_}{i}')
+#             time.sleep(150)
+#             if log2xyz(dir=f'{_}{i}', log_name=f'{_}{i}_0.log'):
+#                 flow_neu(molecule_name=f'{_}{i}')
+#                 time.sleep(100)
+#                 count+=1
+#             else:
+#                 continue
+#             # print(f'{_}{i} is a valid smile string.')
+#         else:
+#             continue
+#             # print(f'{_}{i} is not a valid smile string.')
+#     print(_, count)
