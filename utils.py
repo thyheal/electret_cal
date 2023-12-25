@@ -13,6 +13,8 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 from scipy import stats
+import pandas as pd
+
 '''
 This is some tools used to calculate the ip of molecules.
     1.The flow of the calculation can be illustrated as follows:
@@ -48,12 +50,12 @@ def smile2xyz(xyz_name,smile):
     with open(file_path, "w") as file:
         file.write(xyz_str)
 
-def xyzcheck(molecule_name, Canonsmile):
+def xyzcheck(xyz_name, Canonsmile):
     '''
     This is used to check whether the xyz file is valid.
     Valid means the xyz file can be converted to the same smile string as input in GeoMol.
     '''
-    xyz_name = molecule_name + "_0.xyz"
+    molecule_name =  xyz_name.split('_')[0]
     os.system('obabel {2}/{0} -ixyz --osmi -O {2}/{1}.smi'.format(xyz_name,molecule_name,molecule_name))
     with open(f'{molecule_name}/{molecule_name}.smi', 'r') as file:
         lines = file.readlines()
@@ -70,58 +72,6 @@ def xyzcheck(molecule_name, Canonsmile):
     except Exception as e:
         print(f"Error in xyzcheck: {e}")
         return False
-    
-def xyz2gjf(xyz_name, gjf_header):
-    '''
-    xyz_name: xyz file including postfixed .xyz
-    gjf_header: gjf header file including postfixed .xyz
-    '''
-    dir_name = xyz_name.split('_')[0]
-    if not os.path.exists(dir_name):
-        os.makedirs(dir_name)
-    xyz_path = os.path.join(dir_name, xyz_name)
-    header_path = os.path.join('header', gjf_header)
-    gjf_path = os.path.join(dir_name, xyz_name.replace(".xyz", ".gjf"))
-
-    with open(header_path, 'r') as header_file:
-        header_lines = header_file.readlines()
-    with open(xyz_path, 'r') as xyz_file:
-        atomic_coordinates = xyz_file.readlines()[1:]  # skip the first line
-    wfname = xyz_name.replace(".xyz", ".wfn")
-
-    with open(gjf_path, 'w') as gjf_file:
-        gjf_file.writelines(header_lines)
-        gjf_file.writelines(atomic_coordinates)
-        gjf_file.write("\n")  # add a blank line
-        gjf_file.write(f"{dir_name}/{wfname}\n") #add a line of wfname
-        gjf_file.write("\n" * 4)  # add 4 blank lines, this is important for gaussian calculation
-
-    #change the molecule name in gjf file __change__
-    molename = xyz_name.split('.')[0]
-    with open(gjf_path, 'r') as gjf_file:
-        file_content = gjf_file.read()
-        modified_content = file_content.replace("__change__", molename)
-        modified_content = modified_content.replace("__dir__", dir_name)
-    #write the modified content back to the file
-    with open(gjf_path, 'w') as gjf_file:
-        gjf_file.write(modified_content)
-    state = gjf_header.split('_')[1].split('.')[0]
-    # log.info(f"gjf file with the state of {state} for {dir_name}/{xyz_name} has been generated.")
-    # print(f"gjf file with the state of {state} for {dir_name}/{xyz_name} has been generated.")
-
-def gjf2sh(dir, gjf_name):
-    sh_path = os.path.join(dir, gjf_name.replace(".gjf", ".sh"))
-    sh_header_path = os.path.join('header', "sub_g09.xyz")
-    with open(sh_header_path, 'r') as file:
-        file_content = file.read()
-        modified_content = file_content.replace("__dir__", dir)
-        modified_content = modified_content.replace("__name__", gjf_name.replace(".gjf", ""))
-        modified_content = modified_content.replace("__changegjf__", gjf_name)
-        modified_content = modified_content.replace("__changelog__", gjf_name.replace(".gjf", ".log"))
-    with open(sh_path, 'w') as file:
-        file.write(modified_content)
-    os.system("pjsub {}".format(sh_path))
-
 
 def check_gaussian_log(file_path):
     '''
@@ -138,11 +88,12 @@ def check_gaussian_log(file_path):
         print(f"Error: {e}")
         return False
 
-def log2xyz(dir, log_name):
+def log2xyz(log_name):
     '''
     If valid, return True, else return False.
     sometimes the Gaussian calculation will fail, so we need to check the log file.
     '''
+    dir = log_name.split('_')[0]
     if not check_gaussian_log(os.path.join(dir, log_name)):
         print(f"Error: {dir}/{log_name} is not a valid log file.")        
     id = int(log_name.split('.')[0].split('_')[1]) + 1
@@ -157,22 +108,6 @@ def log2xyz(dir, log_name):
     with open(f'{dir}/{xyz_name}.xyz', 'w') as file:
         file.writelines(lines)
     return check_gaussian_log(os.path.join(dir, log_name))
-
-
-def flow_pos(molecule_name):
-    xyz2gjf(xyz_name = molecule_name + "_0.xyz", gjf_header = "header_pos_nonopt.xyz")
-    gjf2sh(dir = molecule_name, gjf_name = molecule_name + "_0.gjf")
-    
-def flow_neg(molecule_name):
-    xyz2gjf(xyz_name = molecule_name + "_0.xyz", gjf_header = "header_neg_nonopt.xyz")
-    gjf2sh(dir = molecule_name, gjf_name = molecule_name + "_0.gjf")
-
-def flow_neu(molecule_name):
-    log2xyz(dir = molecule_name, log_name = molecule_name + "_0.log")
-    xyz2gjf(xyz_name = molecule_name + "_1.xyz", gjf_header = "header_neu_nonopt.xyz")
-    gjf2sh(dir = molecule_name, gjf_name = molecule_name + "_1.gjf")
-    # log2xyz(dir = molecule_name, log_name = molecule_name + "_1.log")
-
 
 def IP_calculation(dir):
     csv = f'{dir}.csv'
@@ -240,191 +175,25 @@ def IP_analysis(IP_values, molecule_name):
     print(df)
     return median_value, mean_value
 
-
-# def main():
-#     current_time = datetime.datetime.now()
-#     log_file_name = current_time.strftime("%Y-%m-%d_%H_%M.log")
-#     logging.basicConfig(filename=log_file_name, level=logging.INFO, format='%(message)s')
-#     logging.info('Dear user, you are using ip_cal/utils.py created by Yuhan GU.')
-#     smile2xyz(xyz_name = "NH3_0.xyz",smile = "N")
-#     flow_pos(molecule_name="NH3")
-
-
-# if __name__ == "__main__":
-#     for i in range(3,9):
-#         flow_pos(molecule_name=f"A{i}")
-#     for i in range(0, 4):
-#         flow_neu(molecule_name=f"mol{i}")
-    # for i in range(0, 10):
-    #     IP_calculation(dir=f"mol{i}")
-# if __name__ == "__main__":
-#     smile2xyz(xyz_name = "NH3_0.xyz",smile = "N")
-#     xyz2gjf(xyz_name = "NH3_0.xyz", gjf_header = "header_pos_nonopt.xyz")
-#     gjf2sh(dir = "NH3", gjf_name = "NH3_0.gjf")
-#     log2xyz(dir = "NH3", log_name = "NH3_0.log")
-#     xyz2gjf(xyz_name = "NH3_1.xyz", gjf_header = "header_neu_nonopt.xyz")
-#     gjf2sh(dir = "NH3", gjf_name = "NH3_1.gjf")
-#     log2xyz(dir = "NH3", log_name = "NH3_1.log")
-#     IP_calculation(dir = "NH3")
-    
-# name_list = ['EHOPA','AEPY','AEP','APN','DBE','DIPEDA','OA','mXD','S','A','TAEA']
-# name_list = ['EHOPA','AEPY','AEP','APN','DBE','DIPEDA','OA','mXD','S','A']
-# smiles_list = [
-# 'CCCCC(CC)COCCCNC(C(F)(F)C1(F)OC(F)(F)C(F)(F)C1(C(F)(C(O)=O)F)F)=O',
-# 'FC1(F)C(F)(F)C(F)(C(F)(C(O)=O)F)C(F)(C(F)(C(NCCC2=CN=CC=C2)=O)F)O1',
-# 'FC1(F)C(F)(F)C(F)(C(F)(C(O)=O)F)C(F)(C(F)(C(NCCN2CCCCC2)=O)F)O1',
-# 'FC1(F)C(F)(F)C(F)(C(F)(C(O)=O)F)C(F)(C(F)(C(NC2=CC(C#N)=CC(C#N)=C2)=O)F)O1',
-# 'FC1(F)C(F)(F)C(F)(C(F)(C(O)=O)F)C(F)(C(F)(C(NCCN(CCCC)CCCC)=O)F)O1',
-# 'FC1(F)C(F)(F)C(F)(C(F)(C(O)=O)F)C(F)(C(F)(C(NCCN(C(C)C)C(C)C)=O)F)O1',
-# 'FC1(F)C(F)(F)C(F)(C(F)(C(O)=O)F)C(F)(C(F)(C(NCCCCCCCC)=O)F)O1',
-# 'FC1(F)C(F)(F)C(F)(C(F)(C(O)=O)F)C(F)(C(F)(C(NCC2=CC(CN)=CC=C2)=O)F)O1',
-# 'FC1(C(F)(C(F)(F)F)F)C(OC(F)(F)C(F)1F)(C(F)(C(F)(F)F)F)F',
-# 'FC1(C(F)(C(F)(F)F)F)C(OC(F)(F)C(F)1F)(C(F)(C(O)=O)F)F',
-# ]
-
-# smiles_dict = dict(zip(name_list, smiles_list))
-
-
-# names = locals()
-# IP_PCM = {  'EHOPA':7.38,
-#             'AEPY':7.63,
-#             'AEP':6.18,
-#             'APN':8.18,
-#             'DBE':6.27,
-#             'DIPEDA':6.21,
-#             'OA':8.15,
-#             'mXD':6.78,
-#             'S':11.32,
-#             'A':9.73,
-#         }
-# P_sp = {    'EHOPA':0.686,
-#             'AEPY':0.855,
-#             'AEP':0.862,
-#             'APN':0.558,
-#             'DBE':0.746,
-#             'DIPEDA':0.715,
-#             'OA':0.576,
-#             'mXD':0.959,
-#             'S':0.135,
-#             'A':0.211,
-#         }
-# N_sp = {    'EHOPA':0.5,
-#             'AEPY':0.145,
-#             'AEP':0.815,
-#             'APN':0.409,
-#             'DBE':0.676,
-#             'DIPEDA':0.592,
-#             'OA':0.481,
-#             'mXD':0.954,
-#             'S':0.088,
-#             'A':0.237,
-#         }
-
-#IP calculation gaussian
-# for _ in name_list:
-#     count = 0
-#     for i in range(20,40):
-#         if xyzcheck(f'{_}{i}', smiles_dict[_]):
-#             flow_pos(molecule_name=f'{_}{i}')
-#             time.sleep(150)
-#             if log2xyz(dir=f'{_}{i}', log_name=f'{_}{i}_0.log'):
-#                 flow_neu(molecule_name=f'{_}{i}')
-#                 time.sleep(150)
-#                 count+=1
-#             else:
-#                 continue
-#             # print(f'{_}{i} is a valid smile string.')
-#         else:
-#             continue
-#             # print(f'{_}{i} is not a valid smile string.')
-#     print(_, count)
-
-# IP calculation
-# def process_data(prefix, num):
-#     IP_list = []
-#     count_list = []
-#     try:
-#         for i in range(1, num):
-#             identifier = f'{prefix}{i}'
-#             if xyzcheck(identifier,smiles_dict[prefix]):
-#                 IP_list.append(IP_calculation(identifier))
-#                 count_list.append(i)
-#                 print(f'{identifier} is ok')
-#             else:
-#                 print(f'{identifier} is error')
-#     except Exception as e:
-#         print(f"Error: {e}")
-#     return IP_list
-
 def corr(data1, data2):
     return np.corrcoef(np.array(data1), np.array(data2))[0,1]
-
-# names = locals()
-# for _ in name_list:
-#     names[f'IP_{_}'] = process_data(_, 20)
-
-# # IP analysis graph
-# IP_mean,IP_med = {},{}
-# for _ in name_list:
-#     names[f'IP_med_{_}'], names[f'IP_avg_{_}']= IP_analysis(names[f'IP_{_}'],_)
-#     IP_mean[_] = names[f'IP_avg_{_}']
-#     IP_med[_] = names[f'IP_med_{_}']
 
 def square_fig(data1, data2):
     plt.figure(figsize=(6, 6))
     plt.scatter(data1, data2)
-    # 添加标签和标题
     plt.xlabel('X-axis')
     plt.ylabel('Y-axis')
     plt.title('Scatter Plot with Pearson Correlation')
-    # 添加图例
     plt.legend()
-    # 显示图表
     plt.show()
 
-# psp = []
-# for _ in name_list:
-#     psp.append(P_sp[_])
-# ippcm = []
-# for _ in name_list:
-#     ippcm.append(IP_PCM[_])
-# ipmean = []
-# for _ in name_list:
-#     ipmean.append(IP_mean[_])
-# ipmed = []
-# for _ in name_list:
-#     ipmed.append(IP_med[_])
-# nsp = []
-# for _ in name_list:
-#     nsp.append(N_sp[_])
-
-
-# for _ in name_list:
-#     names[f'valid_{_}'] = 0
-# for _ in name_list:
-#     for i in range(0,40):
-#         if xyzcheck(f'{_}{i}', smiles_dict[_]):
-#             names[f'valid_{_}'] += 1
-
-# for _ in name_list:
-#     print(f'{_} valid: {names[f"valid_{_}"]}')
-
-
-# name_list = ['DIPEDA','OA','mXD','S','A']
-# for _ in name_list:
-#     count = 0
-#     for i in range(20,40):
-#         if xyzcheck(f'{_}{i}', smiles_dict[_]):
-#             flow_pos(molecule_name=f'{_}{i}')
-#             time.sleep(150)
-#             if log2xyz(dir=f'{_}{i}', log_name=f'{_}{i}_0.log'):
-#                 flow_neu(molecule_name=f'{_}{i}')
-#                 time.sleep(100)
-#                 count+=1
-#             else:
-#                 continue
-#             # print(f'{_}{i} is a valid smile string.')
-#         else:
-#             continue
-#             # print(f'{_}{i} is not a valid smile string.')
-#     print(_, count)
+def logging_config(log_name):
+    logging.basicConfig(level=logging.DEBUG,
+                        filename=log_name,
+                        filemode='a',
+                        format='%(asctime)s - %(pathname)s[line:%(lineno)d] - %(levelname)s: %(message)s'
+                        )
+current_time = datetime.datetime.now()
+log_file_name = current_time.strftime("%Y-%m-%d_%H_%M.log")
+logging.basicConfig(filename=log_file_name, level=logging.INFO, format='%(message)s')
+logging.info('Dear user, you are using ip_cal/utils.py created by Yuhan GU.')
