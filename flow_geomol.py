@@ -1,6 +1,6 @@
 import utils
 import gaussian_cal
-import logging
+import pandas as pd
 
 name_list = ['A11','AEP5','APN33']
 smiles_list = ['FC1(C(F)(C(F)(F)F)F)C(OC(F)(F)C(F)1F)(C(F)(C(O)=O)F)F',
