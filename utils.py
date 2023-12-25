@@ -186,14 +186,3 @@ def square_fig(data1, data2):
     plt.title('Scatter Plot with Pearson Correlation')
     plt.legend()
     plt.show()
-
-def logging_config(log_name):
-    logging.basicConfig(level=logging.DEBUG,
-                        filename=log_name,
-                        filemode='a',
-                        format='%(asctime)s - %(pathname)s[line:%(lineno)d] - %(levelname)s: %(message)s'
-                        )
-current_time = datetime.datetime.now()
-log_file_name = current_time.strftime("%Y-%m-%d_%H_%M.log")
-logging.basicConfig(filename=log_file_name, level=logging.INFO, format='%(message)s')
-logging.info('Dear user, you are using ip_cal/utils.py created by Yuhan GU.')

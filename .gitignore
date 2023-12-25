@@ -9,3 +9,5 @@
 *.sh
 *.wfn
 *.smi
+*.xyz
+*.pyc
