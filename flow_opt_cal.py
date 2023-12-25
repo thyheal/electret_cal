@@ -1,15 +1,14 @@
 import utils
 import gaussian_cal
-import pandas as pd
 smiles_list = ['C','N','CC','NN']
 name_list = ['Ch4','NH3','Ethane','Hydrazine']
 
-G0 = gaussian_cal.GaussianCal(method='B3LYP',basis='6-31G',charge='pos',wfn=True,debug=True)
+G0 = gaussian_cal.GaussianCal(method='cam-B3LYP',basis='6-31+G(d,p)', charge='pos',wfn=True,debug=True, opt=True)
 for i in range(len(name_list)):
     utils.smile2xyz(f'{name_list[i]}_0.xyz',smiles_list[i])
     G0.Run(f'{name_list[i]}_0.xyz')
 
-G1 = gaussian_cal.GaussianCal(method='B3LYP',basis='6-31G',charge='neu',wfn=True,debug=True)
+G1 = gaussian_cal.GaussianCal(method='cam-B3LYP',basis='6-31+G(d,p)',charge='neu',wfn=True,debug=True)
 for i in range(len(name_list)):
     #提取上次高斯之后的坐标
     utils.log2xyz(f'{name_list[i]}_0.log')

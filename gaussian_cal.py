@@ -18,7 +18,7 @@ class GaussianCal:
         # if not os.path.exists(dir_name):
         #     os.makedirs(dir_name)
         xyz_path = os.path.join(dir_name, self.xyz_name)
-        header_path = os.path.join('header1','gjf_header.txt')
+        header_path = os.path.join('header','gjf_header.txt')
         gjf_path = os.path.join(dir_name, self.xyz_name.replace(".xyz", ".gjf"))
         molename = self.xyz_name.split('.')[0]
         wfname = self.xyz_name.replace(".xyz", ".wfn")

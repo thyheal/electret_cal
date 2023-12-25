@@ -1,8 +1,9 @@
 import utils
 import gaussian_cal
 import pandas as pd
+
 smiles_list = ['C','N','CC','NN']
-name_list = ['Ch4','NH3','Ethane','Hydrazine']
+name_list = ['CH4','NH3','Ethane','Hydrazine']
 
 G0 = gaussian_cal.GaussianCal(method='B3LYP',basis='6-31G',charge='pos',wfn=True,debug=True)
 for i in range(len(name_list)):
@@ -20,9 +21,9 @@ for i in range(len(name_list)):
         print(name_list[i],"_1.log is wrong.")
 
 IP = []
-IP_dict = {}
 for _ in name_list:
     IP.append(float("{:.3f}".format((utils.IP_calculation(_)))))
-table = pd.DataFrame({'Name': name_list, 'IP': IP})
 
+table = pd.DataFrame({'Name': name_list, 'IP': IP})
+table.to_csv('IP.csv',index=False)
         
