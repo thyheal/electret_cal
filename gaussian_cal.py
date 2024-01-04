@@ -1,6 +1,6 @@
 import os
 class GaussianCal:
-    def __init__(self, method, basis, charge,opt = False,dispersion = False, PCM=False, wfn=True,debug=False):
+    def __init__(self, method, basis, charge,opt = False,dispersion = False, polar = False, Volume = False, PCM=False, wfn=True,debug=False):
         
         self.method = method
         self.basis = basis
@@ -8,6 +8,8 @@ class GaussianCal:
 
         self.opt = opt
         self.dispersion = dispersion
+        self.polar = polar
+        self.Volume = Volume
         self.PCM = PCM
         self.wfn = wfn
         self.debug = debug
@@ -36,6 +38,8 @@ class GaussianCal:
 
             modified_header_lines = modified_header_lines.replace("__opt__", "opt" if self.opt else "")
             modified_header_lines = modified_header_lines.replace("__dispersion__", "em=gd3" if self.dispersion else "")
+            modified_header_lines = modified_header_lines.replace("__polar__", "polar" if self.polar else "")
+            modified_header_lines = modified_header_lines.replace("__Volume__", "volume" if self.Volume else "")
             modified_header_lines = modified_header_lines.replace("__PCM__", 'SCRF=(PCM,Solvent=Generic,Read)' if self.PCM else "")
             modified_header_lines = modified_header_lines.replace("__wfn__", f"out=wfn" if self.wfn else "")
 
