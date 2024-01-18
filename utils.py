@@ -65,6 +65,7 @@ def xyzcheck(xyz_name, Canonsmile):
         smile1 = Chem.CanonSmiles(smile1)
         Canonsmile1 = Canonsmile.replace('@','')
         Canonsmile1 = Chem.CanonSmiles(Canonsmile1)
+        print(Canonsmile1)
         if smile1 != Canonsmile1:
             return False
         else:
