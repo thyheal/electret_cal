@@ -62,10 +62,11 @@ def xyzcheck(xyz_name, Canonsmile):
     smile = lines[0].split('\t')[0]
     try:
         smile1 = smile.replace('@','')
+        # smile1 = smile.replace('[','')
+        # smile1 = smile.replace(']','')
         smile1 = Chem.CanonSmiles(smile1)
         Canonsmile1 = Canonsmile.replace('@','')
         Canonsmile1 = Chem.CanonSmiles(Canonsmile1)
-        print(Canonsmile1)
         if smile1 != Canonsmile1:
             return False
         else:
@@ -114,11 +115,37 @@ def IP_calculation(dir):
     csv = f'{dir}.csv'
     open(csv, 'w').close()
     try:
-        path1 = f'{dir}/{dir}_0.log'
-        path2 = f'{dir}/{dir}_1.log'
+        path1 = f'{dir}/{dir}_p1.log'
+        path2 = f'{dir}/{dir}_0.log'
         if check_gaussian_log(path1) and check_gaussian_log(path2):
-            os.system("echo ` grep 'SCF Done' {0} | tail -n 1 | awk '{{print $5}}' ` > {1}".format(f'{dir}/{dir}_0.log',csv))
-            os.system("echo ` grep 'SCF Done' {0} | tail -n 1 | awk '{{print $5}}' ` >> {1}".format(f'{dir}/{dir}_1.log',csv))
+            os.system("echo ` grep 'SCF Done' {0} | tail -n 1 | awk '{{print $5}}' ` > {1}".format(path1,csv))
+            os.system("echo ` grep 'SCF Done' {0} | tail -n 1 | awk '{{print $5}}' ` >> {1}".format(path2,csv))
+            with open(csv, 'r') as f:
+                lines = f.readlines()
+                cation = lines[-2].strip()
+                neutral = lines[-1].strip()
+                IP = (float(cation) - float(neutral)) * 27.2114
+                os.system('rm {0}'.format(csv))
+                os.system("echo  {0},{1} eV >> ip_val.csv".format(dir ,IP))
+            # print (dir," cation energy(Ha):", cation, " neutral energy(Ha):", neutral, 'IP(eV):', IP)
+                return(IP)
+        else:
+            os.system('rm {0}'.format(csv))
+            return(0)
+    except Exception as e:
+        print(f"Error: {e}")
+        os.system("echo  {0},Error eV >> ip_val.csv".format(dir))
+        os.system('rm {0}'.format(csv))
+        return(0)
+def EA_calculation(dir):
+    csv = f'{dir}.csv'
+    open(csv, 'w').close()
+    try:
+        path1 = f'{dir}/{dir}_0.log'
+        path2 = f'{dir}/{dir}_n1.log'
+        if check_gaussian_log(path1) and check_gaussian_log(path2):
+            os.system("echo ` grep 'SCF Done' {0} | tail -n 1 | awk '{{print $5}}' ` > {1}".format(path1,csv))
+            os.system("echo ` grep 'SCF Done' {0} | tail -n 1 | awk '{{print $5}}' ` >> {1}".format(path2,csv))
             with open(csv, 'r') as f:
                 lines = f.readlines()
                 cation = lines[-2].strip()

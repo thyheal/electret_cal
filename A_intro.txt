@@ -1,19 +1,13 @@
-cam-B3LYP 6-311g(d,p) for positive and neutral with optimization
-论文里面一样 去掉了弥散函数
-PCM
+Calculation method：    B3LYP
+Basis：                 6-31G(d,p)
+Dispersion：            None
+PCM：                   None
+EPS：                   None
+Result：                IP
 
-RDKIT generated 有问题，所以换成了手画的
-
-
-            Name	IP  	polar  			volume		EPS
-0	Benzoqionone	9.676	45.354			4529.919	1.131
-1	TCNQ	 		8.073	392.626       	10015.856	1.589
-2	F4TCNQ	        8.233	471.264			9850.078	1.752
-
-确实更接近一点
+Comment：
 
 
-Name	IP
-0	Benzoqionone	9.676
-1	TCNQ	8.073
-2	F4TCNQ	8.233
+
+
+Comment end

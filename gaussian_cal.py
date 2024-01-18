@@ -1,6 +1,9 @@
 import os
 class GaussianCal:
-    def __init__(self, method, basis, charge,EPS,opt = False,dispersion = False, polar = False, Volume = False, PCM=False, wfn=True,debug=False):
+    '''
+    Given an xyz file, generate a Gaussian input file and a shell file and run Gaussian calculation
+    '''
+    def __init__(self, method, basis, charge,EPS = 0,opt = False,dispersion = False, polar = False, Volume = False, PCM=False, wfn=True,debug=False):
         
         self.method = method
         self.basis = basis
@@ -16,15 +19,20 @@ class GaussianCal:
         self.debug = debug
 
     def Run(self,xyz_name):
+        ###############################
+        # Generate Gaussian input file #
+        
         self.xyz_name = xyz_name
         dir_name = self.xyz_name.split('_')[0]
         # if not os.path.exists(dir_name):
         #     os.makedirs(dir_name)
         xyz_path = os.path.join(dir_name, self.xyz_name)
         header_path = os.path.join('header','gjf_header.txt')
-        gjf_path = os.path.join(dir_name, self.xyz_name.replace(".xyz", ".gjf"))
-        molename = self.xyz_name.split('.')[0]
-        wfname = self.xyz_name.replace(".xyz", ".wfn")
+        charge_mapping = {'pos': "p1", 'neg': "n1", 'neu': "0"}
+        gjf_path = os.path.join(dir_name,dir_name + "_" + charge_mapping[self.charge] + ".gjf")
+        molename = dir_name + "_" + charge_mapping[self.charge]
+        wfnname = dir_name + "_" + charge_mapping[self.charge] + ".wfn"
+        # wfname = self.xyz_name.replace(".xyz", ".wfn")
         with open(header_path, 'r') as header_file:
             header_lines = header_file.read()
 
@@ -55,9 +63,10 @@ class GaussianCal:
                 gjf_file.write(f"eps={self.EPS}\n")
                 gjf_file.write("\n")
             if self.wfn:
-                gjf_file.write(f"{dir_name}/{wfname}\n")
+                gjf_file.write(f"{dir_name}/{wfnname}\n")
             gjf_file.write("\n" * 4)  # add 4 blank lines, this is important for gaussian calculation
-
+        ###############################
+        # Generate Gaussian shell file #
         sh_path = gjf_path.replace(".gjf", ".sh")
         sh_header_path = os.path.join('header', "sub_g09.txt")
         with open(sh_header_path, 'r') as file:
@@ -65,8 +74,31 @@ class GaussianCal:
             modified_content = file_content.replace("__dir__", dir_name)
             modified_content = modified_content.replace("__name__", gjf_path.replace(".gjf", ""))
             modified_content = modified_content.replace("__changegjf__", gjf_path)
+
             modified_content = modified_content.replace("__changelog__", gjf_path.replace(".gjf", ".log"))
             modified_content = modified_content.replace("__debug__", 'i8cpu' if self.debug else 'F1cpu')
         with open(sh_path, 'w') as file:
             file.write(modified_content)
         os.system("sbatch {}".format(sh_path))
+
+    def log(self):
+        ###############################
+        # generate log file to record the calculation
+        txt_path = 'A_intro.txt'
+        header_path = os.path.join('header','A_intro.txt')
+        with open(header_path, 'r') as file:
+            txt_content = file.read()
+
+            modified_txt_content = txt_content.replace("__method__", self.method)
+            modified_txt_content = modified_txt_content.replace("__basis__", self.basis)
+            charge_mapping = {'pos': "IP", 'neg': "EA", 'neu': "0"}
+            modified_txt_content = modified_txt_content.replace("__charge__", charge_mapping[self.charge])
+            modified_txt_content = modified_txt_content.replace("__dispersion__", "em=gd3" if self.dispersion else "None")
+            modified_txt_content = modified_txt_content.replace("__PCM__", 'SCRF=(PCM,Solvent=Generic,Read)' if self.PCM else "None")
+            modified_txt_content = modified_txt_content.replace("__EPS__", self.EPS if self.PCM else "None")
+
+            modified_txt_content = modified_txt_content.replace("__wfn__", f"out=wfn" if self.wfn else "")
+        with open(txt_path, 'w') as file:
+            file.write(modified_txt_content)
+
+    

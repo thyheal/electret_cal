@@ -1,12 +1,13 @@
+*.xyz
 *.gjf
-*.log
-*.out
+*.sh
 *.chk
 *.rwf
+*.wfn
+*.log
+*.out
 *.png
 *.out
-*.sh
-*.wfn
 *.smi
 *.xyz
 *.pyc
