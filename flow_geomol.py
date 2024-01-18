@@ -2,10 +2,12 @@ import utils
 import gaussian_cal
 import pandas as pd
 
-name_list = ['A11','AEP5','APN33']
-smiles_list = ['FC1(C(F)(C(F)(F)F)F)C(OC(F)(F)C(F)1F)(C(F)(C(O)=O)F)F',
-                'FC1(F)C(F)(F)C(F)(C(F)(C(O)=O)F)C(F)(C(F)(C(NCCN2CCCCC2)=O)F)O1',
-                'FC1(F)C(F)(F)C(F)(C(F)(C(O)=O)F)C(F)(C(F)(C(NC2=CC(C#N)=CC(C#N)=C2)=O)F)O1',]
+name_list = ['Benzoqionone',
+             'TCNQ',
+             'F4TCNQ']
+smiles_list = ['C1=CC(=O)C=CC1=O',
+               'C1=CC(=C(C#N)C#N)C=CC1=C(C#N)C#N',
+               'C(#N)C(=C1C(=C(C(=C(C#N)C#N)C(=C1F)F)F)F)C#N']
 
 G0 = gaussian_cal.GaussianCal(method='B3LYP',basis='6-31G',charge='pos',wfn=True,debug=True)
 for i in range(len(name_list)):

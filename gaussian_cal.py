@@ -1,13 +1,16 @@
 import os
 class GaussianCal:
-    def __init__(self, method, basis, charge,opt = False,dispersion = False, PCM=False, wfn=True,debug=False):
+    def __init__(self, method, basis, charge,EPS,opt = False,dispersion = False, polar = False, Volume = False, PCM=False, wfn=True,debug=False):
         
         self.method = method
         self.basis = basis
         self.charge = charge
+        self.EPS = EPS
 
         self.opt = opt
         self.dispersion = dispersion
+        self.polar = polar
+        self.Volume = Volume
         self.PCM = PCM
         self.wfn = wfn
         self.debug = debug
@@ -36,6 +39,8 @@ class GaussianCal:
 
             modified_header_lines = modified_header_lines.replace("__opt__", "opt" if self.opt else "")
             modified_header_lines = modified_header_lines.replace("__dispersion__", "em=gd3" if self.dispersion else "")
+            modified_header_lines = modified_header_lines.replace("__polar__", "polar" if self.polar else "")
+            modified_header_lines = modified_header_lines.replace("__Volume__", "volume" if self.Volume else "")
             modified_header_lines = modified_header_lines.replace("__PCM__", 'SCRF=(PCM,Solvent=Generic,Read)' if self.PCM else "")
             modified_header_lines = modified_header_lines.replace("__wfn__", f"out=wfn" if self.wfn else "")
 
@@ -47,7 +52,7 @@ class GaussianCal:
             gjf_file.writelines(atomic_coordinates)
             gjf_file.write("\n")  # add a blank line
             if self.PCM:
-                gjf_file.write("eps=2.05\n")
+                gjf_file.write(f"eps={self.EPS}\n")
                 gjf_file.write("\n")
             if self.wfn:
                 gjf_file.write(f"{dir_name}/{wfname}\n")
