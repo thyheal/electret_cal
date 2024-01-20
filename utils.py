@@ -152,7 +152,7 @@ def EA_calculation(dir):
                 neutral = lines[-1].strip()
                 IP = (float(cation) - float(neutral)) * 27.2114
                 os.system('rm {0}'.format(csv))
-                os.system("echo  {0},{1} eV >> ip_val.csv".format(dir ,IP))
+                os.system("echo  {0},{1} eV >> ea_val.csv".format(dir ,IP))
             # print (dir," cation energy(Ha):", cation, " neutral energy(Ha):", neutral, 'IP(eV):', IP)
                 return(IP)
         else:
@@ -160,7 +160,7 @@ def EA_calculation(dir):
             return(0)
     except Exception as e:
         print(f"Error: {e}")
-        os.system("echo  {0},Error eV >> ip_val.csv".format(dir))
+        os.system("echo  {0},Error eV >> ea_val.csv".format(dir))
         os.system('rm {0}'.format(csv))
         return(0)
 
@@ -214,3 +214,4 @@ def square_fig(data1, data2):
     plt.title('Scatter Plot with Pearson Correlation')
     plt.legend()
     plt.show()
+ 

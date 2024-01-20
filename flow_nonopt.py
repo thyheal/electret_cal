@@ -19,14 +19,19 @@ for i in range(len(name_list)):
         # os.system(f'rm -r {name_list[i]}')
 
 
-G1 = gaussian_cal.GaussianCal(method='B3LYP',basis='6-31G(d,p)',charge='neg',wfn=True,debug=True)
+G1 = gaussian_cal.GaussianCal(method='B3LYP',basis='6-31G(d,p)',charge='neu',wfn=True,debug=True)
 for i in range(len(name_list)):
     #提取上次高斯之后的坐标
     #检查经过一次高斯计算后是否还是原来的分子
     utils.xyzcheck(f'{name_list[i]}_0.xyz',smiles_list[i])
     G1.Run(f'{name_list[i]}_0.xyz')
 
-
+G2 = gaussian_cal.GaussianCal(method='B3LYP',basis='6-31G(d,p)',charge='neg',wfn=True,debug=True)
+for i in range(len(name_list)):
+    #提取上次高斯之后的坐标
+    #检查经过一次高斯计算后是否还是原来的分子
+    utils.xyzcheck(f'{name_list[i]}_0.xyz',smiles_list[i])
+    G2.Run(f'{name_list[i]}_0.xyz')
 
 IP = []
 IP_dict = {}
