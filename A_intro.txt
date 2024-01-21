@@ -1,5 +1,5 @@
-Calculation method：    B3LYP
-Basis：                 6-31G(d,p)
+Calculation method：    cam-B3LYP
+Basis：                 6-311G(d,p)
 Dispersion：            None
 PCM：                   None
 EPS：                   None

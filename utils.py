@@ -14,6 +14,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 from scipy import stats
 import pandas as pd
+import subprocess
 
 '''
 This is some tools used to calculate the ip of molecules.
@@ -164,6 +165,23 @@ def EA_calculation(dir):
         os.system('rm {0}'.format(csv))
         return(0)
 
+def time_calculation(log):
+    with open(log, 'r') as file:
+        for line in file:
+            if "Job cpu time" in line:
+                cpu_time = line.split(":")[1].strip()  # 获取冒号后面的部分并去除首尾空格
+                print(f"Job cpu time: {cpu_time}")
+                break
+
+def i8cpu_running():
+    output = subprocess.check_output("squeue", shell=True, text=True)
+    count = output.count('i8cpu')
+    if count > 0:
+        return True
+    else:
+        return False
+
+    
 def IP_analysis(IP_values, molecule_name):
     '''
     Return the median value of the IP values.
