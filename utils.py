@@ -170,8 +170,12 @@ def time_calculation(log):
         for line in file:
             if "Job cpu time" in line:
                 cpu_time = line.split(":")[1].strip()  # 获取冒号后面的部分并去除首尾空格
-                print(f"Job cpu time: {cpu_time}")
-                break
+                day = cpu_time.split()[0]
+                hour = cpu_time.split()[2]
+                min = cpu_time.split()[4]
+                sec = cpu_time.split()[6]
+                cpu_time = int(day) * 24 * 60 + int(hour) * 60 + int(min)  + float(sec)/60
+                return cpu_time
 
 def i8cpu_running():
     output = subprocess.check_output("squeue", shell=True, text=True)
