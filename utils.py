@@ -29,7 +29,7 @@ This is some tools used to calculate the ip of molecules.
 
 '''
 # ###########################################################
-def smile2xyz(xyz_name,smile):
+def smile2xyz(xyz_name,smile,randomSeed = None):
     '''
     xyz_name: xyz file including postfixed .xyz
     smiles: smiles string
@@ -40,7 +40,10 @@ def smile2xyz(xyz_name,smile):
     '''
     mol = Chem.MolFromSmiles(smile)
     mol = Chem.AddHs(mol)
-    AllChem.EmbedMolecule(mol, randomSeed = 1)
+    if randomSeed is not None:
+        AllChem.EmbedMolecule(mol, randomSeed=randomSeed)
+    else:
+        AllChem.EmbedMolecule(mol)
     AllChem.MMFFOptimizeMolecule(mol)
     # Draw.MolToImage(mol,size=(100,100))
     xyz_str = Chem.MolToXYZBlock(mol)
@@ -138,6 +141,7 @@ def IP_calculation(dir):
         os.system("echo  {0},Error eV >> ip_val.csv".format(dir))
         os.system('rm {0}'.format(csv))
         return(0)
+    
 def EA_calculation(dir):
     csv = f'{dir}.csv'
     open(csv, 'w').close()
@@ -149,9 +153,9 @@ def EA_calculation(dir):
             os.system("echo ` grep 'SCF Done' {0} | tail -n 1 | awk '{{print $5}}' ` >> {1}".format(path2,csv))
             with open(csv, 'r') as f:
                 lines = f.readlines()
-                cation = lines[-2].strip()
-                neutral = lines[-1].strip()
-                IP = (float(cation) - float(neutral)) * 27.2114
+                anion = lines[-1].strip()
+                neutral = lines[-2].strip()
+                IP = (float(anion) - float(neutral)) * 27.2114
                 os.system('rm {0}'.format(csv))
                 os.system("echo  {0},{1} eV >> ea_val.csv".format(dir ,IP))
             # print (dir," cation energy(Ha):", cation, " neutral energy(Ha):", neutral, 'IP(eV):', IP)
@@ -164,6 +168,56 @@ def EA_calculation(dir):
         os.system("echo  {0},Error eV >> ea_val.csv".format(dir))
         os.system('rm {0}'.format(csv))
         return(0)
+    
+def HOMO_calculation(dir):
+    csv = f'{dir}_homo.csv'
+    open(csv, 'w').close()
+    try:
+        path = f'{dir}/{dir}_0.log'
+        if check_gaussian_log(path):
+            os.system("echo ` grep 'occ' {0} | tail -n 1 | awk '{{print $5}}' ` > {1}".format(path,csv))
+            with open(csv, 'r') as f:
+                lines = f.readlines()
+                HOMO = lines[-1].strip()
+                HOMO = float(HOMO) * 27.2114
+                os.system('rm {0}'.format(csv))
+                os.system("echo  {0},{1} eV >> HOMO.csv".format(dir ,HOMO))
+            # print (dir," cation energy(Ha):", cation, " neutral energy(Ha):", neutral, 'IP(eV):', IP)
+                return(-HOMO)
+        else:
+            os.system('rm {0}'.format(csv))
+            return(0)
+    except Exception as e:
+        print(f"Error: {e}")
+        os.system("echo  {0},Error eV >> HOMO.csv".format(dir))
+        os.system('rm {0}'.format(csv))
+        return(0)
+
+def LUMO_calculation(dir):
+    csv = f'{dir}_lumo.csv'
+    open(csv, 'w').close()
+    try:
+        path = f'{dir}/{dir}_p1.log'
+        if check_gaussian_log(path):
+            os.system("echo ` grep 'virt' {0} | head -n 1 | awk '{{print $5}}' ` > {1}".format(path,csv))
+            with open(csv, 'r') as f:
+                lines = f.readlines()
+                LUMO = lines[-1].strip()
+                LUMO = float(LUMO) * 27.2114
+                os.system('rm {0}'.format(csv))
+                os.system("echo  {0},{1} eV >> LUMO.csv".format(dir ,LUMO))
+            # print (dir," cation energy(Ha):", cation, " neutral energy(Ha):", neutral, 'IP(eV):', IP)
+                return(LUMO)
+        else:
+            os.system('rm {0}'.format(csv))
+            return(0)
+    except Exception as e:
+        print(f"Error: {e}")
+        os.system("echo  {0},Error eV >> LUMO.csv".format(dir))
+        os.system('rm {0}'.format(csv))
+        return(0)
+    
+
 
 def time_calculation(log):
     with open(log, 'r') as file:
