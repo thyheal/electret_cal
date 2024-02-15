@@ -197,7 +197,7 @@ def LUMO_calculation(dir):
     csv = f'{dir}_lumo.csv'
     open(csv, 'w').close()
     try:
-        path = f'{dir}/{dir}_p1.log'
+        path = f'{dir}/{dir}_0.log'
         if check_gaussian_log(path):
             os.system("echo ` grep 'virt' {0} | head -n 1 | awk '{{print $5}}' ` > {1}".format(path,csv))
             with open(csv, 'r') as f:
@@ -217,6 +217,29 @@ def LUMO_calculation(dir):
         os.system('rm {0}'.format(csv))
         return(0)
     
+def HOMO_n1_calculation(dir):
+    csv = f'{dir}_homo.csv'
+    open(csv, 'w').close()
+    try:
+        path = f'{dir}/{dir}_n1.log'
+        if check_gaussian_log(path):
+            os.system("echo ` grep 'occ' {0} | tail -n 1 | awk '{{print $5}}' ` > {1}".format(path,csv))
+            with open(csv, 'r') as f:
+                lines = f.readlines()
+                HOMO = lines[-1].strip()
+                HOMO = float(HOMO) * 27.2114
+                os.system('rm {0}'.format(csv))
+                os.system("echo  {0},{1} eV >> HOMO.csv".format(dir ,HOMO))
+            # print (dir," cation energy(Ha):", cation, " neutral energy(Ha):", neutral, 'IP(eV):', IP)
+                return(-HOMO)
+        else:
+            os.system('rm {0}'.format(csv))
+            return(0)
+    except Exception as e:
+        print(f"Error: {e}")
+        os.system("echo  {0},Error eV >> HOMO.csv".format(dir))
+        os.system('rm {0}'.format(csv))
+        return(0)
 
 
 def time_calculation(log):
