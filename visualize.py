@@ -1,19 +1,23 @@
-
-import pandas as pd
-
-df = pd.read_csv('Pubchem_FFKM.csv')
-smiles = list(df['SMILES'])
-cids = list(df['Name'])
-from rdkit import Chem
-from rdkit.Chem import Draw
 import matplotlib.pyplot as plt
-from tqdm import tqdm
-def multiplot(smiles_list, cids,name):
-    # 创建一个10x10的子图布局
-    num_rows = len(smiles_list) // 10 + 1
-    num_cols = 10
-    fig, axs = plt.subplots(num_rows, num_cols, figsize=(num_cols*5, num_rows*5))
+from rdkit.Chem import Draw
+from rdkit import Chem
+from datetime import datetime
+from rdkit.Chem import Draw
+from rdkit import Chem
+from datetime import datetime
+import matplotlib.pyplot as plt
 
+def multi_mol_plot(smiles_list, name_list, prop=False, save_name=False, cols=10):
+    current_time = datetime.now()
+    time_string = current_time.strftime("%Y-%m-%d_%H-%M-%S")
+    file_name = f"output_{time_string}.txt"
+    if not save_name:
+        save_name = file_name
+        
+    # 创建一个10x10的子图布局
+    num_rows = (len(smiles_list) + cols - 1) // cols
+    num_cols = cols
+    fig, axs = plt.subplots(num_rows, num_cols, figsize=(num_cols*5, num_rows*5))
     # 遍历SMILES表达式并在子图中显示
     for i, smiles in enumerate(smiles_list):
         mol = Chem.MolFromSmiles(smiles)
@@ -22,14 +26,18 @@ def multiplot(smiles_list, cids,name):
             img = Draw.MolToImage(mol, size=(450, 450))
             ax.imshow(img)
             ax.axis('off')  # 关闭坐标轴
-            ax.set_title(f"{cids[i]}", fontsize=40)  # 添加子图标题
-    # for i in range(20, num_rows * num_cols):
+            if prop:
+                ax.set_title(f"{name_list[i], prop[i]}", fontsize=30)
+            else:
+                ax.set_title(f"{name_list[i]}", fontsize=30)
+
+    # 隐藏多余的子图
     for i in range(len(smiles_list), num_rows * num_cols):
         axs.flatten()[i].axis('off')
+
     # 调整子图布局
     plt.tight_layout()
-    plt.savefig(name,dpi=300,format='pdf')
-    # 显示图像
-    # plt.show()
-for i in tqdm(range(0, len(smiles)//100 +1)):
-    multiplot(smiles[i*100:(i+1)*100], cids[i*100:(i+1)*100],f'FFKM_{i}.pdf')
+
+    # 保存图像
+    plt.savefig(save_name, dpi=300, format='pdf')
+
