@@ -241,7 +241,6 @@ def HOMO_n1_calculation(dir):
         os.system('rm {0}'.format(csv))
         return(0)
 
-
 def time_calculation(log):
     with open(log, 'r') as file:
         for line in file:
@@ -261,8 +260,7 @@ def i8cpu_running():
         return True
     else:
         return False
-
-    
+  
 def IP_analysis(IP_values, molecule_name):
     '''
     Return the median value of the IP values.
