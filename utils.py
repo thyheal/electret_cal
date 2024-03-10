@@ -1,21 +1,9 @@
-import shutil
-from openbabel import pybel
 import os
 from rdkit import Chem
 from rdkit.Chem import AllChem
-from rdkit.Chem import Draw
-from datetime import datetime
-import csv
-import logging
-import datetime
-import time
-import numpy as np
-import pandas as pd
-import matplotlib.pyplot as plt
-from scipy import stats
 import pandas as pd
 import subprocess
-
+ 
 '''
 This is some tools used to calculate the ip of molecules.
     1.The flow of the calculation can be illustrated as follows:
@@ -79,21 +67,6 @@ def xyzcheck(xyz_name, Canonsmile):
         print(f"Error in xyzcheck: {e}")
         return False
 
-def check_gaussian_log(file_path):
-    '''
-    If valid, return True, else return False.
-    '''
-    try:
-        with open(file_path, 'r') as file:
-            log_content = file.read()
-            if "Normal termination" in log_content:
-                return True
-            else:
-                return False
-    except Exception as e:
-        print(f"Error: {e}")
-        return False
-
 def log2xyz(log_name):
     '''
     If valid, return True, else return False.
@@ -115,144 +88,6 @@ def log2xyz(log_name):
         file.writelines(lines)
     return check_gaussian_log(os.path.join(dir, log_name))
 
-def IP_calculation(dir):
-    csv = f'{dir}.csv'
-    open(csv, 'w').close()
-    try:
-        path1 = f'{dir}/{dir}_p1.log'
-        path2 = f'{dir}/{dir}_0.log'
-        if check_gaussian_log(path1) and check_gaussian_log(path2):
-            os.system("echo ` grep 'SCF Done' {0} | tail -n 1 | awk '{{print $5}}' ` > {1}".format(path1,csv))
-            os.system("echo ` grep 'SCF Done' {0} | tail -n 1 | awk '{{print $5}}' ` >> {1}".format(path2,csv))
-            with open(csv, 'r') as f:
-                lines = f.readlines()
-                cation = lines[-2].strip()
-                neutral = lines[-1].strip()
-                IP = (float(cation) - float(neutral)) * 27.2114
-                os.system('rm {0}'.format(csv))
-                os.system("echo  {0},{1} eV >> ip_val.csv".format(dir ,IP))
-            # print (dir," cation energy(Ha):", cation, " neutral energy(Ha):", neutral, 'IP(eV):', IP)
-                return(IP)
-        else:
-            os.system('rm {0}'.format(csv))
-            return(0)
-    except Exception as e:
-        print(f"Error: {e}")
-        os.system("echo  {0},Error eV >> ip_val.csv".format(dir))
-        os.system('rm {0}'.format(csv))
-        return(0)
-    
-def EA_calculation(dir):
-    csv = f'{dir}.csv'
-    open(csv, 'w').close()
-    try:
-        path1 = f'{dir}/{dir}_0.log'
-        path2 = f'{dir}/{dir}_n1.log'
-        if check_gaussian_log(path1) and check_gaussian_log(path2):
-            os.system("echo ` grep 'SCF Done' {0} | tail -n 1 | awk '{{print $5}}' ` > {1}".format(path1,csv))
-            os.system("echo ` grep 'SCF Done' {0} | tail -n 1 | awk '{{print $5}}' ` >> {1}".format(path2,csv))
-            with open(csv, 'r') as f:
-                lines = f.readlines()
-                anion = lines[-1].strip()
-                neutral = lines[-2].strip()
-                IP = (float(anion) - float(neutral)) * 27.2114
-                os.system('rm {0}'.format(csv))
-                os.system("echo  {0},{1} eV >> ea_val.csv".format(dir ,IP))
-            # print (dir," cation energy(Ha):", cation, " neutral energy(Ha):", neutral, 'IP(eV):', IP)
-                return(IP)
-        else:
-            os.system('rm {0}'.format(csv))
-            return(0)
-    except Exception as e:
-        print(f"Error: {e}")
-        os.system("echo  {0},Error eV >> ea_val.csv".format(dir))
-        os.system('rm {0}'.format(csv))
-        return(0)
-    
-def HOMO_calculation(dir):
-    csv = f'{dir}_homo.csv'
-    open(csv, 'w').close()
-    try:
-        path = f'{dir}/{dir}_0.log'
-        if check_gaussian_log(path):
-            os.system("echo ` grep 'occ' {0} | tail -n 1 | awk '{{print $5}}' ` > {1}".format(path,csv))
-            with open(csv, 'r') as f:
-                lines = f.readlines()
-                HOMO = lines[-1].strip()
-                HOMO = float(HOMO) * 27.2114
-                os.system('rm {0}'.format(csv))
-                os.system("echo  {0},{1} eV >> HOMO.csv".format(dir ,HOMO))
-            # print (dir," cation energy(Ha):", cation, " neutral energy(Ha):", neutral, 'IP(eV):', IP)
-                return(-HOMO)
-        else:
-            os.system('rm {0}'.format(csv))
-            return(0)
-    except Exception as e:
-        print(f"Error: {e}")
-        os.system("echo  {0},Error eV >> HOMO.csv".format(dir))
-        os.system('rm {0}'.format(csv))
-        return(0)
-
-def LUMO_calculation(dir):
-    csv = f'{dir}_lumo.csv'
-    open(csv, 'w').close()
-    try:
-        path = f'{dir}/{dir}_0.log'
-        if check_gaussian_log(path):
-            os.system("echo ` grep 'virt' {0} | head -n 1 | awk '{{print $5}}' ` > {1}".format(path,csv))
-            with open(csv, 'r') as f:
-                lines = f.readlines()
-                LUMO = lines[-1].strip()
-                LUMO = float(LUMO) * 27.2114
-                os.system('rm {0}'.format(csv))
-                os.system("echo  {0},{1} eV >> LUMO.csv".format(dir ,LUMO))
-            # print (dir," cation energy(Ha):", cation, " neutral energy(Ha):", neutral, 'IP(eV):', IP)
-                return(LUMO)
-        else:
-            os.system('rm {0}'.format(csv))
-            return(0)
-    except Exception as e:
-        print(f"Error: {e}")
-        os.system("echo  {0},Error eV >> LUMO.csv".format(dir))
-        os.system('rm {0}'.format(csv))
-        return(0)
-    
-def HOMO_n1_calculation(dir):
-    csv = f'{dir}_homo.csv'
-    open(csv, 'w').close()
-    try:
-        path = f'{dir}/{dir}_n1.log'
-        if check_gaussian_log(path):
-            os.system("echo ` grep 'occ' {0} | tail -n 1 | awk '{{print $5}}' ` > {1}".format(path,csv))
-            with open(csv, 'r') as f:
-                lines = f.readlines()
-                HOMO = lines[-1].strip()
-                HOMO = float(HOMO) * 27.2114
-                os.system('rm {0}'.format(csv))
-                os.system("echo  {0},{1} eV >> HOMO.csv".format(dir ,HOMO))
-            # print (dir," cation energy(Ha):", cation, " neutral energy(Ha):", neutral, 'IP(eV):', IP)
-                return(-HOMO)
-        else:
-            os.system('rm {0}'.format(csv))
-            return(0)
-    except Exception as e:
-        print(f"Error: {e}")
-        os.system("echo  {0},Error eV >> HOMO.csv".format(dir))
-        os.system('rm {0}'.format(csv))
-        return(0)
-
-def time_calculation(log):
-    with open(log, 'r') as file:
-        for line in file:
-            if "Job cpu time" in line:
-                cpu_time = line.split(":")[1].strip()  # 获取冒号后面的部分并去除首尾空格
-                day = cpu_time.split()[0]
-                hour = cpu_time.split()[2]
-                min = cpu_time.split()[4]
-                sec = cpu_time.split()[6]
-                cpu_time = int(day) * 24 * 60 + int(hour) * 60 + int(min)  + float(sec)/60
-                return cpu_time
-
 def i8cpu_running():
     output = subprocess.check_output("squeue", shell=True, text=True)
     count = output.count('i8cpu')
@@ -261,54 +96,3 @@ def i8cpu_running():
     else:
         return False
   
-def IP_analysis(IP_values, molecule_name):
-    '''
-    Return the median value of the IP values.
-    '''
-    ip_data = np.array(IP_values)
-    # 检测和处理异常值
-    ip_data_cleaned = ip_data[ip_data > 0]
-    ip_data_cleaned = ip_data_cleaned[ip_data_cleaned != None]
-
-    # 创建箱线图来展示数据分布
-    plt.boxplot(ip_data_cleaned)
-    plt.title(f'{molecule_name} IP distribution')
-    plt.xlabel('IP')
-    plt.ylim(0, 15)
-    plt.ylabel('eV')
-    plt.show()
-    # 计算平均数和中位数
-    mean_value = np.mean(ip_data_cleaned)
-    median_value = np.median(ip_data_cleaned)
-    min_value = np.min(ip_data_cleaned)
-    max_value = np.max(ip_data_cleaned)
-    
-    # 创建直方图来展示数据的概率分布
-    plt.hist(ip_data_cleaned, bins=10, density=True, alpha=0.6, color='b')
-    plt.title(f'{molecule_name} IP distribution')
-    plt.xlabel('IP')
-    plt.xlim(0, 15)
-    plt.ylabel('density')
-    plt.show()
-    print(len(ip_data_cleaned))
-    print(f'This is the IP calculated for {molecule_name}')
-    print(f'min:{min_value}')
-    print(f'max:{max_value}')
-    print(f'avg:{mean_value}')
-    print(f'med:{median_value}')
-    df = pd.DataFrame({'IP_Data': ip_data_cleaned})
-    print(df)
-    return median_value, mean_value
-
-def corr(data1, data2):
-    return np.corrcoef(np.array(data1), np.array(data2))[0,1]
-
-def square_fig(data1, data2):
-    plt.figure(figsize=(6, 6))
-    plt.scatter(data1, data2)
-    plt.xlabel('X-axis')
-    plt.ylabel('Y-axis')
-    plt.title('Scatter Plot with Pearson Correlation')
-    plt.legend()
-    plt.show()
- 
