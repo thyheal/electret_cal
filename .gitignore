@@ -10,7 +10,5 @@
 *.smi
 *.xyz
 *.pyc
-*.csv
 *.pdf
-*.log
 *.log

@@ -76,10 +76,12 @@ def data_wash(df):
     mean_values = df.mean()
     df.fillna(mean_values, inplace=True)
     return df
+
 def add_mean(df):
     column_means = df.mean()
     df = df.append(column_means, ignore_index=True, sort=False)
     df = df.rename(index={""})
+
 def time_calculation(log):
     with open(log, 'r') as file:
         for line in file:
