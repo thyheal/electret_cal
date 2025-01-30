@@ -48,8 +48,10 @@ class DataProcessor:
         if index not in ['IP', 'EA']:
             raise ValueError("index必须是'IP'或'EA'")
 
-        neutral_path = Path(dir_name) / f"{dir_name}_0.log"
-        charge_path = Path(dir_name) / f"{dir_name}_{'p1' if index == 'IP' else 'n1'}.log"
+        # 构建正确的路径
+        base_path = Path(dir_name)
+        neutral_path = base_path / f"{dir_name}_0.log"
+        charge_path = base_path / f"{dir_name}_{'p1' if index == 'IP' else 'n1'}.log"
 
         try:
             if not (DataProcessor.check_gaussian_log(neutral_path) and 
@@ -88,7 +90,9 @@ class DataProcessor:
         if index not in ['HOMO', 'LUMO', 'HOMOn1']:
             raise ValueError("index必须是'HOMO'、'LUMO'或'HOMOn1'")
 
-        log_path = Path(dir_name) / f"{dir_name}_{'n1' if index == 'HOMOn1' else '0'}.log"
+        # 构建正确的路径
+        base_path = Path(dir_name)
+        log_path = base_path / f"{dir_name}_{'n1' if index == 'HOMOn1' else '0'}.log"
 
         try:
             if not DataProcessor.check_gaussian_log(log_path):
@@ -121,9 +125,9 @@ class DataProcessor:
             current_iteration = []
             for name in tqdm(name_list):
                 if prop in ["IP", "EA"]:
-                    value = DataProcessor.charge_calculation(f"{name}{i}", prop)
+                    value = DataProcessor.charge_calculation(name, prop)
                 else:
-                    value = DataProcessor.property_calculation(f"{name}{i}", prop)
+                    value = DataProcessor.property_calculation(name, prop)
                 current_iteration.append(value)
             prop_list.append(current_iteration)
 

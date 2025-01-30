@@ -1,4 +1,4 @@
-from typing import Tuple, List
+from typing import Tuple, List, Optional
 from rdkit import Chem
 from rdkit.Chem import AllChem
 import os
@@ -128,17 +128,19 @@ class MoleculeProcessor:
             raise ValueError(f"结构优化失败: {str(e)}")
 
     @staticmethod
-    def smile2xyz(xyz_name: str, smile: str, randomSeed: int = None) -> None:
+    def smile2xyz(xyz_name: str, smile: str, dir_name: Optional[str] = None, parent_dir: Optional[str] = None, randomSeed: int = None) -> None:
         """将SMILES字符串转换为XYZ格式文件，并创建相应的目录结构。
 
         Args:
             xyz_name: xyz文件名（包含.xyz后缀）
             smile: SMILES字符串
+            dir_name: 自定义目录名称（可选，如果不提供则使用xyz文件名的前缀）
+            parent_dir: 父目录名称（可选，如果提供则在此目录下创建子目录）
             randomSeed: 3D构象生成的随机种子（可选）
 
         Example:
-            smile2xyz('CH4_0.xyz','C')
-            将创建CH4目录并在其中生成CH4_0.xyz文件
+            smile2xyz('CH4_0.xyz', 'C', 'CH4_calc', 'my_project')
+            将创建my_project/CH4_calc目录并在其中生成CH4_0.xyz文件
 
         Note:
             xyz文件名应以_n.xyz结尾，其中n为索引（应为1或2）
@@ -159,12 +161,20 @@ class MoleculeProcessor:
             AllChem.MMFFOptimizeMolecule(mol)
 
             xyz_str = Chem.MolToXYZBlock(mol)
-            dir_name = xyz_name.split('_')[0]
+            # 构建目录路径
+            if dir_name is None:
+                dir_name = xyz_name.split('_')[0]
             
-            if not os.path.exists(dir_name):
-                os.makedirs(dir_name)
+            # 如果提供了父目录，将其添加到路径中
+            if parent_dir is not None:
+                dir_path = os.path.join(parent_dir, dir_name)
+            else:
+                dir_path = dir_name
+            
+            if not os.path.exists(dir_path):
+                os.makedirs(dir_path)
                 
-            file_path = os.path.join(dir_name, xyz_name)
+            file_path = os.path.join(dir_path, xyz_name)
             with open(file_path, "w") as file:
                 file.write(xyz_str)
 

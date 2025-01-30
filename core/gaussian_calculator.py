@@ -33,7 +33,8 @@ class GaussianCalculator:
                  volume: bool = False,
                  pcm: bool = False,
                  wfn: bool = True,
-                 debug: bool = False) -> None:
+                 debug: bool = False,
+                 parent_dir: Optional[str] = None) -> None:
         """初始化GaussianCalculator实例。
 
         Args:
@@ -60,6 +61,7 @@ class GaussianCalculator:
         self.pcm = pcm
         self.wfn = wfn
         self.debug = debug
+        self.parent_dir = Path(parent_dir) if parent_dir else Path('.')
 
         self._validate_inputs()
 
@@ -68,32 +70,38 @@ class GaussianCalculator:
         if self.charge not in ['pos', 'neg', 'neu']:
             raise ValueError(f"无效的电荷类型: {self.charge}. 必须是 'pos', 'neg' 或 'neu'")
 
-    def run(self, xyz_name: str) -> None:
+    def run(self, xyz_name: str, dir_name: Optional[str] = None) -> None:
         """运行高斯计算任务。
 
         Args:
             xyz_name: XYZ文件名
+            dir_name: 自定义目录名称（可选，如果不提供则使用xyz文件名的前缀）
 
         Raises:
             FileNotFoundError: 如果找不到必要的文件
             IOError: 如果文件操作失败
         """
         try:
-            self._prepare_calculation(xyz_name)
+            self._prepare_calculation(xyz_name, dir_name)
             self._generate_input_file()
             self._generate_shell_script()
             self._submit_job()
         except Exception as e:
             raise RuntimeError(f"计算任务执行失败: {str(e)}")
 
-    def _prepare_calculation(self, xyz_name: str) -> None:
-        """准备计算所需的文件和路径。"""
+    def _prepare_calculation(self, xyz_name: str, dir_name: Optional[str] = None) -> None:
+        """准备计算所需的文件和路径。
+
+        Args:
+            xyz_name: XYZ文件名
+            dir_name: 自定义目录名称（可选，如果不提供则使用xyz文件名的前缀）
+        """
         self.xyz_name = xyz_name
-        self.dir_name = Path(xyz_name).stem.split('_')[0]
+        self.dir_name = dir_name if dir_name is not None else Path(xyz_name).stem.split('_')[0]
         
         # 设置文件路径
-        self.xyz_path = Path(self.dir_name) / self.xyz_name
-        self.header_path = Path('..') / 'header' / 'gjf_header.txt'
+        self.xyz_path = self.parent_dir / self.dir_name / self.xyz_name
+        self.header_path = Path('.') / 'header' / 'gjf_header.txt'
         
         # 检查必要文件是否存在
         if not self.xyz_path.exists():
@@ -103,8 +111,8 @@ class GaussianCalculator:
 
     def _generate_input_file(self) -> None:
         """生成高斯输入文件。"""
-        charge_suffix = {'pos': 'p1', 'neg': 'n1', 'neu': '0'}[self.charge]
-        self.gjf_path = Path(self.dir_name) / f"{self.dir_name}_{charge_suffix}.gjf"
+        charge_suffix = {'pos': 'pos', 'neg': 'neg', 'neu': 'neu'}[self.charge]
+        self.gjf_path = self.parent_dir / self.dir_name / f"{self.dir_name}_{charge_suffix}.gjf"
         self.wfn_name = f"{self.dir_name}_{charge_suffix}.wfn"
 
         # 读取并修改模板
@@ -150,7 +158,7 @@ class GaussianCalculator:
     def _generate_shell_script(self) -> None:
         """生成提交作业的Shell脚本。"""
         self.sh_path = self.gjf_path.with_suffix('.sh')
-        sh_template_path = Path('..') / 'header' / 'sub_g09.txt'
+        sh_template_path = Path('.') / 'header' / 'sub_g09.txt'
 
         if not sh_template_path.exists():
             raise FileNotFoundError(f"找不到Shell脚本模板: {sh_template_path}")
@@ -179,7 +187,7 @@ class GaussianCalculator:
 
     def generate_log(self) -> None:
         """生成计算日志文件。"""
-        txt_path = Path('A_intro.txt')
+        txt_path = self.parent_dir / 'A_intro.txt'
         header_path = Path('header') / 'A_intro.txt'
 
         if not header_path.exists():
