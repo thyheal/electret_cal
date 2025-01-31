@@ -113,7 +113,7 @@ class GaussianCalculator:
         """生成高斯输入文件。"""
         charge_suffix = {'pos': 'pos', 'neg': 'neg', 'neu': 'neu'}[self.charge]
         self.gjf_path = self.parent_dir / self.dir_name / f"{self.dir_name}_{charge_suffix}.gjf"
-        self.wfn_name = f"{self.dir_name}_{charge_suffix}.wfn"
+        self.wfn_name = f"{self.dir_name}/{self.dir_name}_{charge_suffix}.wfn"
 
         # 读取并修改模板
         with open(self.header_path, 'r') as f:
@@ -122,7 +122,7 @@ class GaussianCalculator:
         # 替换模板中的占位符
         replacements = {
             '__title__': f"{self.dir_name}_{charge_suffix}",
-            '__dir__': self.dir_name,
+            '__dir__': str(self.parent_dir / self.dir_name),
             '__method__': self.method,
             '__basis__': self.basis,
             '__charge__': {'pos': '1 2', 'neg': '-1 2', 'neu': '0 1'}[self.charge],
