@@ -151,7 +151,7 @@ class GaussianCalculator:
                 f.write(f'eps={self.eps}\n\n')
             
             if self.wfn:
-                f.write(f'{self.dir_name}/{self.wfn_name}\n')
+                f.write(f'{self.parent_dir}/{self.wfn_name}\n')
             
             f.write('\n' * 4)
 

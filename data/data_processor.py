@@ -51,12 +51,12 @@ class DataProcessor:
 
         # 构建正确的路径
         base_path = Path(parent_dir) / dir_name if parent_dir else Path(dir_name)
-        neutral_path = base_path / f"{dir_name}_0.log"
-        charge_path = base_path / f"{dir_name}_{'p1' if index == 'IP' else 'n1'}.log"
-
+        neutral_path = base_path / f"{dir_name}_neu.log"
+        charge_path = base_path / f"{dir_name}_{'pos' if index == 'IP' else 'neg'}.log"
         try:
             if not (DataProcessor.check_gaussian_log(neutral_path) and 
                     DataProcessor.check_gaussian_log(charge_path)):
+                print('abnormal')
                 return None
 
             def get_scf_energy(path: Path) -> float:
@@ -94,7 +94,7 @@ class DataProcessor:
 
         # 构建正确的路径
         base_path = Path(parent_dir) / dir_name if parent_dir else Path(dir_name)
-        log_path = base_path / f"{dir_name}_{'n1' if index == 'HOMOn1' else '0'}.log"
+        log_path = base_path / f"{dir_name}_{'neg' if index == 'HOMOn1' else 'neu'}.log"
 
         try:
             if not DataProcessor.check_gaussian_log(log_path):
@@ -111,7 +111,8 @@ class DataProcessor:
     @staticmethod
     def create_property_dataframe(name_list: List[str], 
                                 iteration: int, 
-                                prop: str) -> pd.DataFrame:
+                                prop: str,
+                                parent_dir: Optional[str] = None,) -> pd.DataFrame:
         """为指定的属性创建数据框。
 
         Args:
@@ -126,10 +127,11 @@ class DataProcessor:
         for i in range(iteration):
             current_iteration = []
             for name in tqdm(name_list):
+                name_with_iteration = name + str(i)
                 if prop in ["IP", "EA"]:
-                    value = DataProcessor.charge_calculation(name, prop)
+                    value = DataProcessor.charge_calculation(name_with_iteration, prop, parent_dir)
                 else:
-                    value = DataProcessor.property_calculation(name, prop)
+                    value = DataProcessor.property_calculation(name_with_iteration, prop, parent_dir)
                 current_iteration.append(value)
             prop_list.append(current_iteration)
 
