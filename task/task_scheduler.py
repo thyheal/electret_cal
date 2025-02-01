@@ -1,19 +1,24 @@
 from typing import List, Optional, Dict
 from concurrent.futures import ThreadPoolExecutor
 import logging
+import time
 from .task_manager import TaskManager, TaskStatus, Task
+from utils.cluster_monitor import ClusterMonitor
 
 class TaskScheduler:
-    def __init__(self, max_workers: int = 4):
+    def __init__(self, max_workers: int = 4, debug: bool = False):
         """初始化任务调度器
 
         Args:
             max_workers: 最大并行任务数
+            debug: 是否为调试模式，调试模式下限制队列任务数为5
         """
         self.max_workers = max_workers
+        self.debug = debug
         self.task_manager = TaskManager()
         self.executor = ThreadPoolExecutor(max_workers=max_workers)
         self.running_futures: Dict[str, 'Future'] = {}
+        self.cluster_monitor = ClusterMonitor()
         self.logger = logging.getLogger(__name__)
 
     def schedule_task(self, molecule_name: str, calculation_params: Dict) -> str:
@@ -35,6 +40,13 @@ class TaskScheduler:
         running_tasks = self.task_manager.get_running_tasks()
         if len(running_tasks) >= self.max_workers:
             return
+
+        # 在调试模式下检查集群队列状态
+        if self.debug:
+            max_cluster_tasks = 5
+            while self.cluster_monitor.is_queue_full(max_cluster_tasks):
+                self.logger.info("等待集群队列空闲...")
+                time.sleep(60)
 
         available_slots = self.max_workers - len(running_tasks)
         pending_tasks = self.task_manager.get_pending_tasks()
