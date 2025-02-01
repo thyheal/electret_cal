@@ -32,3 +32,21 @@ class ClusterMonitor:
             bool: 如果队列中的任务数量达到或超过最大值则返回True
         """
         return self.get_running_tasks_count(queue_name) >= max_tasks
+
+    def cancel_all_jobs(self) -> None:
+        """取消所有正在排队的任务"""
+        try:
+            # 获取所有任务的 JOBID
+            output = subprocess.check_output("squeue", shell=True, text=True)
+            # 跳过表头行，按行分割
+            lines = output.strip().split('\n')[1:]
+            
+            # 提取每个任务的 JOBID 并取消
+            for line in lines:
+                if line.strip():
+                    job_id = line.split()[0]
+                    subprocess.run(f"scancel {job_id}", shell=True)
+                    print(f"已取消任务: {job_id}")
+                    
+        except subprocess.CalledProcessError as e:
+            print(f"取消任务时出错: {str(e)}")
