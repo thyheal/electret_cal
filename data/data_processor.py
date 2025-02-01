@@ -35,12 +35,13 @@ class DataProcessor:
             return False
 
     @staticmethod
-    def charge_calculation(dir_name: str, index: str) -> Optional[float]:
+    def charge_calculation(dir_name: str, index: str, parent_dir: Optional[str] = None) -> Optional[float]:
         """计算分子的电荷相关属性（IP或EA）。
 
         Args:
             dir_name: 目录名
             index: 计算类型 ('IP' 或 'EA')
+            parent_dir: 父目录路径（可选）
 
         Returns:
             Optional[float]: 计算结果，如果计算失败返回None
@@ -49,7 +50,7 @@ class DataProcessor:
             raise ValueError("index必须是'IP'或'EA'")
 
         # 构建正确的路径
-        base_path = Path(dir_name)
+        base_path = Path(parent_dir) / dir_name if parent_dir else Path(dir_name)
         neutral_path = base_path / f"{dir_name}_0.log"
         charge_path = base_path / f"{dir_name}_{'p1' if index == 'IP' else 'n1'}.log"
 
@@ -77,12 +78,13 @@ class DataProcessor:
             return None
 
     @staticmethod
-    def property_calculation(dir_name: str, index: str) -> Optional[float]:
+    def property_calculation(dir_name: str, index: str, parent_dir: Optional[str] = None) -> Optional[float]:
         """计算分子的特定属性（HOMO/LUMO/HOMOn1）。
 
         Args:
             dir_name: 目录名
             index: 属性类型 ('HOMO', 'LUMO', 或 'HOMOn1')
+            parent_dir: 父目录路径（可选）
 
         Returns:
             Optional[float]: 计算结果，如果计算失败返回None
@@ -91,7 +93,7 @@ class DataProcessor:
             raise ValueError("index必须是'HOMO'、'LUMO'或'HOMOn1'")
 
         # 构建正确的路径
-        base_path = Path(dir_name)
+        base_path = Path(parent_dir) / dir_name if parent_dir else Path(dir_name)
         log_path = base_path / f"{dir_name}_{'n1' if index == 'HOMOn1' else '0'}.log"
 
         try:
