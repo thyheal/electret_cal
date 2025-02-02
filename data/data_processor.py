@@ -222,3 +222,55 @@ class DataProcessor:
         plt.show()
 
         return correlation
+    @staticmethod
+    def log2xyz(log_name: str, parent_dir: Optional[str] = None, suffix: str = 'optstruc') -> bool:
+        """从高斯日志文件中提取分子结构并保存为xyz格式。
+
+        Args:
+            log_name: 日志文件名
+            parent_dir: 父目录路径（可选）
+            suffix: xyz文件名后缀（默认为'optstruc'）
+
+        Returns:
+            bool: 如果日志文件有效返回True，否则返回False
+        """
+        # 获取目录名和基础名称
+        dir_name = log_name.split('_')[0]
+        base_name = log_name.split('.')[0].split('_')[0]
+        
+        # 构建完整的日志文件路径
+        log_dir = os.path.join(parent_dir, dir_name) if parent_dir else dir_name
+        log_path = os.path.join(log_dir, log_name)
+        
+        # 检查日志文件有效性
+        if not DataProcessor.check_gaussian_log(log_path):
+            print(f"Error: {log_path} is not a valid log file.")
+            return False
+            
+        # 构建xyz文件名和路径
+        xyz_name = f"{base_name}_{suffix}"
+        temp_xyz_path = os.path.join(log_dir, f"{xyz_name}.xyz")
+        
+        # 使用obabel转换格式
+        os.system(f'obabel {log_path} -ig09 -oxyz -O {temp_xyz_path}')
+        
+        # 读取并修改xyz文件
+        try:
+            with open(temp_xyz_path, 'r') as file:
+                lines = file.readlines()
+            lines[1] = '\n'  # 替换第二行为空行
+            with open(temp_xyz_path, 'w') as file:
+                file.writelines(lines)
+        except Exception as e:
+            print(f"处理xyz文件时出错: {str(e)}")
+            return False
+        
+        # 确保目标目录存在
+        final_dir = os.path.join(parent_dir, base_name) if parent_dir else base_name
+        os.makedirs(final_dir, exist_ok=True)
+        
+        # 移动文件到最终位置
+        final_path = os.path.join(final_dir, f"{xyz_name}.xyz")
+        os.rename(temp_xyz_path, final_path)
+        
+        return True
