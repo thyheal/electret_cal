@@ -16,64 +16,28 @@ from core.molecule_processor import MoleculeProcessor
 from core.gaussian_calculator import GaussianCalculator
 from visualization.plot_manager import PlotManager
 from utils.cluster_monitor import ClusterMonitor
-
 # some calculations for wang's paper
 base_list = [
 'C(F)(F)(F)C(F)(F)C(F)(F)C(F)(F)(OC(F)(F)(F))',
+
 
 ]
 name_list = ['FFKM']
 set_name = 'opt'
 iteration = 3
-calculator_params = {
-    'parent_dir': set_name,
-    'method': 'CAM-B3LYP',  # DFT泛函
-    'basis': '6-31G(d,p)',  # 基组
-    'opt': True,  # 进行结构优化
-    'dispersion': False,  # 包含色散校正
-    'polar': False,  # 不计算极化率
-    'volume': False,  # 不计算体积
-    'pcm': True,  # 不使用PCM溶剂化模型
-    'eps': 4.9,  # PCM模型的介电常数
     'wfn': True,  # 输出波函数文件
     'debug': True  # 非调试模式
 }
 
-# 使用PlotManager绘制分子结构
+    'opt': True,  # 进行结构优化
 PlotManager.plot_molecules(
     smiles_list=base_list,
     name_list=name_list,
-    parent_dir=set_name,
+    'pcm': True,  # 不使用PCM溶剂化模型
     save_path='molecular_structures.pdf',
     cols=5,  # 每行显示4个分子
-    with_timestamp=False
+    'debug': True  # 非调试模式
 )
-# FFKM分子构建和交联反应参数
-direction = 'L'
-m = 1
-n = 0
-c = 3
-
-# 进行FFKM分子构建和交联反应
-FFKM_list = []
-for base_mol in base_list:
-    # 构建FFKM分子
-    ffkm, connection_point = MoleculeProcessor.build_ffkm(
-        m=m,
-        n=n,
-        c=c,
-        connection_direction=direction
-    )
-    
-    # 模拟交联反应
-    crossed_mol = MoleculeProcessor.simulate_crosslink_reaction(
-        base=base_mol,
-        ffkm=ffkm,
-        connection_point=connection_point
-    )
-    
-    FFKM_list.append(crossed_mol)
-
 # 绘制交联反应后的分子结构
 PlotManager.plot_molecules(
     smiles_list=FFKM_list,

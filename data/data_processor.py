@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 import subprocess
 from pathlib import Path
 from tqdm import tqdm
-
+import os
 class DataProcessor:
     """数据处理核心类，负责处理高斯计算结果和数据分析。
 
