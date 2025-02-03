@@ -56,7 +56,7 @@ class DataProcessor:
         try:
             if not (DataProcessor.check_gaussian_log(neutral_path) and 
                     DataProcessor.check_gaussian_log(charge_path)):
-                print('abnormal')
+                # print('abnormal')
                 return None
 
             def get_scf_energy(path: Path) -> float:
@@ -79,30 +79,82 @@ class DataProcessor:
 
     @staticmethod
     def property_calculation(dir_name: str, index: str, parent_dir: Optional[str] = None) -> Optional[float]:
-        """计算分子的特定属性（HOMO/LUMO/HOMOn1）。
+        """计算分子的特定属性（HOMO/HOMO-1/LUMO/LUMO+1）。
 
         Args:
             dir_name: 目录名
-            index: 属性类型 ('HOMO', 'LUMO', 或 'HOMOn1')
+            index: 属性类型 ('HOMO', 'HOMO-1', 'LUMO', 或 'LUMO+1')
             parent_dir: 父目录路径（可选）
 
         Returns:
             Optional[float]: 计算结果，如果计算失败返回None
         """
-        if index not in ['HOMO', 'LUMO', 'HOMOn1']:
-            raise ValueError("index必须是'HOMO'、'LUMO'或'HOMOn1'")
+        if index not in ['HOMO', 'HOMO-1', 'LUMO', 'LUMO+1']:
+            raise ValueError("index必须是'HOMO'、'HOMO-1'、'LUMO'或'LUMO+1'")
 
         # 构建正确的路径
         base_path = Path(parent_dir) / dir_name if parent_dir else Path(dir_name)
-        log_path = base_path / f"{dir_name}_{'neg' if index == 'HOMOn1' else 'neu'}.log"
+        log_path = base_path / f"{dir_name}_neu.log"
 
         try:
             if not DataProcessor.check_gaussian_log(log_path):
                 return None
 
-            cmd = f"grep '{'virt' if index == 'LUMO' else 'occ'}' {log_path} | {'head' if index == 'LUMO' else 'tail'} -n 1 | awk '{{print $5}}'"
-            result = subprocess.check_output(cmd, shell=True)
-            return float(result.decode().strip()) * 27.2114
+            # 根据不同的轨道类型设置不同的提取命令
+            if index in ['HOMO', 'HOMO-1']:
+                # 获取最后一行occ的内容
+                cmd = f"grep 'Alpha  occ. eigenvalues' {log_path} | tail -n 1"
+                result = subprocess.check_output(cmd, shell=True)
+                values = result.decode().strip().split()
+                
+                # 提取数值
+                numbers = [float(val) for val in values if val.replace('.', '').replace('-', '').isdigit()]
+                
+                if len(numbers) == 1 and index == 'HOMO-1':
+                    # 如果只有一个数值且需要HOMO-1，获取上一行的最后一个值
+                    cmd = f"grep 'Alpha  occ. eigenvalues' {log_path} | tail -n 2 | head -n 1"
+                    result = subprocess.check_output(cmd, shell=True)
+                    prev_values = result.decode().strip().split()
+                    prev_numbers = [float(val) for val in prev_values if val.replace('.', '').replace('-', '').isdigit()]
+                    if prev_numbers:
+                        return prev_numbers[-1] * 27.2114
+                        # return prev_numbers[-1]
+
+                    return None
+                
+                # HOMO是最后一个值，HOMO-1是倒数第二个值
+                if len(numbers) >= (2 if index == 'HOMO-1' else 1):
+                    value_index = -1 if index == 'HOMO' else -2
+                    return numbers[value_index] * 27.2114
+                    # return numbers[value_index]
+                return None
+                
+            else:  # LUMO or LUMO+1
+                # 获取第一行virt的内容
+                cmd = f"grep 'Alpha virt. eigenvalues' {log_path} | head -n 1"
+                result = subprocess.check_output(cmd, shell=True)
+                values = result.decode().strip().split()
+                
+                # 提取数值
+                numbers = [float(val) for val in values if val.replace('.', '').replace('-', '').isdigit()]
+                
+                if len(numbers) == 1 and index == 'LUMO+1':
+                    # 如果只有一个数值且需要LUMO+1，获取下一行的第5个值
+                    cmd = f"grep 'Alpha virt. eigenvalues' {log_path} | head -n 2 | tail -n 1"
+                    result = subprocess.check_output(cmd, shell=True)
+                    next_values = result.decode().strip().split()
+                    next_numbers = [float(val) for val in next_values if val.replace('.', '').replace('-', '').isdigit()]
+                    if len(next_numbers) >= 5:
+                        return next_numbers[4] * 27.2114
+                        # return next_numbers[4]
+                    return None
+                
+                # LUMO是第一个值，LUMO+1是第二个值
+                if len(numbers) >= (2 if index == 'LUMO+1' else 1):
+                    value_index = 0 if index == 'LUMO' else 1
+                    return numbers[value_index] * 27.2114
+                    # return numbers[value_index]
+                return None
 
         except Exception as e:
             print(f"计算{index}时出错: {str(e)}")
