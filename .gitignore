@@ -11,5 +11,5 @@
 *.xyz
 *.pyc
 *.pdf
-*.log
+# *.log
 *.pdf
