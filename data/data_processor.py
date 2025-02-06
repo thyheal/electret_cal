@@ -78,6 +78,38 @@ class DataProcessor:
             return None
 
     @staticmethod
+    def trapdepth_calculation(dir_name: str, index: str, parent_dir: Optional[str] = None) -> Optional[float]:
+        """计算分子的陷阱深度（HOMO_trapdepth或LUMO_trapdepth）。
+
+        Args:
+            dir_name: 目录名
+            index: 计算类型 ('HOMO_trapdepth' 或 'LUMO_trapdepth')
+            parent_dir: 父目录路径（可选）
+
+        Returns:
+            Optional[float]: 计算结果，如果计算失败返回None
+        """
+        if index not in ['HOMO_trapdepth', 'LUMO_trapdepth']:
+            raise ValueError("index必须是'HOMO_trapdepth'或'LUMO_trapdepth'")
+
+        try:
+            if index == 'HOMO_trapdepth':
+                homo = DataProcessor.property_calculation(dir_name, 'HOMO', parent_dir)
+                homo_1 = DataProcessor.property_calculation(dir_name, 'HOMO-1', parent_dir)
+                if homo is not None and homo_1 is not None:
+                    return homo - homo_1
+            else:  # LUMO_trapdepth
+                lumo_1 = DataProcessor.property_calculation(dir_name, 'LUMO+1', parent_dir)
+                lumo = DataProcessor.property_calculation(dir_name, 'LUMO', parent_dir)
+                if lumo_1 is not None and lumo is not None:
+                    return lumo_1 - lumo
+            return None
+
+        except Exception as e:
+            print(f"计算{index}时出错: {str(e)}")
+            return None
+
+    @staticmethod
     def property_calculation(dir_name: str, index: str, parent_dir: Optional[str] = None) -> Optional[float]:
         """计算分子的特定属性（HOMO/HOMO-1/LUMO/LUMO+1）。
 
@@ -130,8 +162,13 @@ class DataProcessor:
                 return None
                 
             else:  # LUMO or LUMO+1
-                # 获取第一行virt的内容
-                cmd = f"grep 'Alpha virt. eigenvalues' {log_path} | head -n 1"
+                # 获取最后一个HOMO行的下一行
+                cmd = f"grep 'Alpha  occ. eigenvalues' {log_path} | tail -n 1 | awk '{{print NR}}'" # 获取最后一个HOMO行的行号
+                result = subprocess.check_output(cmd, shell=True)
+                homo_line_num = int(result.decode().strip())
+                
+                # 获取LUMO行（HOMO行的下一行）
+                cmd = f"sed -n '{homo_line_num+1}p' {log_path}"
                 result = subprocess.check_output(cmd, shell=True)
                 values = result.decode().strip().split()
                 
@@ -139,21 +176,19 @@ class DataProcessor:
                 numbers = [float(val) for val in values if val.replace('.', '').replace('-', '').isdigit()]
                 
                 if len(numbers) == 1 and index == 'LUMO+1':
-                    # 如果只有一个数值且需要LUMO+1，获取下一行的第5个值
-                    cmd = f"grep 'Alpha virt. eigenvalues' {log_path} | head -n 2 | tail -n 1"
+                    # 如果只有一个数值且需要LUMO+1，获取下一行的值
+                    cmd = f"sed -n '{homo_line_num+2}p' {log_path}"
                     result = subprocess.check_output(cmd, shell=True)
                     next_values = result.decode().strip().split()
                     next_numbers = [float(val) for val in next_values if val.replace('.', '').replace('-', '').isdigit()]
-                    if len(next_numbers) >= 5:
-                        return next_numbers[4] * 27.2114
-                        # return next_numbers[4]
+                    if next_numbers:
+                        return next_numbers[0] * 27.2114
                     return None
                 
                 # LUMO是第一个值，LUMO+1是第二个值
                 if len(numbers) >= (2 if index == 'LUMO+1' else 1):
                     value_index = 0 if index == 'LUMO' else 1
                     return numbers[value_index] * 27.2114
-                    # return numbers[value_index]
                 return None
 
         except Exception as e:
@@ -171,6 +206,7 @@ class DataProcessor:
             name_list: 分子名称列表
             iteration: 迭代次数
             prop: 属性类型
+            parent_dir: 父目录路径（可选）
 
         Returns:
             pd.DataFrame: 包含计算结果的数据框
@@ -179,15 +215,21 @@ class DataProcessor:
         for i in range(iteration):
             current_iteration = []
             for name in tqdm(name_list):
-                name_with_iteration = name + str(i)
+                # 构建正确的目录名，确保与文件系统中的目录结构匹配
+                dir_name = f"{name}{i}"
                 if prop in ["IP", "EA"]:
-                    value = DataProcessor.charge_calculation(name_with_iteration, prop, parent_dir)
+                    value = DataProcessor.charge_calculation(dir_name, prop, parent_dir)
+                elif prop in ["HOMO_trapdepth", "LUMO_trapdepth"]:
+                    value = DataProcessor.trapdepth_calculation(dir_name, prop, parent_dir)
                 else:
-                    value = DataProcessor.property_calculation(name_with_iteration, prop, parent_dir)
+                    value = DataProcessor.property_calculation(dir_name, prop, parent_dir)
                 current_iteration.append(value)
             prop_list.append(current_iteration)
 
-        return pd.DataFrame(prop_list, columns=name_list)
+        # 创建数据框，使用分子名称作为列名，迭代序号作为行索引
+        df = pd.DataFrame(prop_list, columns=name_list)
+        df.index = [f"Iteration_{i}" for i in range(iteration)]
+        return df
 
     @staticmethod
     def clean_data(df: pd.DataFrame) -> pd.DataFrame:
